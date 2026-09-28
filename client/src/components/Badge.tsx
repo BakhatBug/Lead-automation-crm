@@ -3,17 +3,17 @@ import { ReplyIntent, LeadStatus, DealStage } from '../types/index.js';
 
 export const IntentBadge: React.FC<{ intent: ReplyIntent }> = ({ intent }) => {
   const styles: Record<ReplyIntent, string> = {
-    INTERESTED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-    MEETING_REQUEST: 'bg-violet-500/10 text-violet-400 border-violet-500/30 font-semibold animate-pulse',
-    PRICING_REQUEST: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-    QUESTION: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-    OBJECTION: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-    NOT_NOW: 'bg-slate-500/10 text-slate-400 border-slate-500/30',
-    NOT_INTERESTED: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-    OUT_OF_OFFICE: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-    UNSUBSCRIBE: 'bg-red-500/15 text-red-400 border-red-500/40',
-    BOUNCE: 'bg-red-500/20 text-red-300 border-red-500/50',
-    UNKNOWN: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+    INTERESTED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    MEETING_REQUEST: 'bg-blue-50 text-blue-700 border-blue-300 font-semibold',
+    PRICING_REQUEST: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    QUESTION: 'bg-amber-50 text-amber-700 border-amber-200',
+    OBJECTION: 'bg-orange-50 text-orange-700 border-orange-200',
+    NOT_NOW: 'bg-slate-100 text-slate-700 border-slate-200',
+    NOT_INTERESTED: 'bg-rose-50 text-rose-700 border-rose-200',
+    OUT_OF_OFFICE: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+    UNSUBSCRIBE: 'bg-red-50 text-red-700 border-red-200',
+    BOUNCE: 'bg-red-100 text-red-800 border-red-200',
+    UNKNOWN: 'bg-slate-100 text-slate-600 border-slate-200',
   };
 
   const labels: Record<ReplyIntent, string> = {
@@ -43,21 +43,21 @@ export const IntentBadge: React.FC<{ intent: ReplyIntent }> = ({ intent }) => {
 
 export const StatusBadge: React.FC<{ status: LeadStatus }> = ({ status }) => {
   const styles: Record<LeadStatus, string> = {
-    NEW: 'bg-slate-800 text-slate-300 border-slate-700',
-    ENROLLED: 'bg-indigo-950/60 text-indigo-300 border-indigo-700/50',
-    ACTIVE: 'bg-blue-950/60 text-blue-300 border-blue-700/50',
-    REPLIED: 'bg-amber-950/60 text-amber-300 border-amber-700/50',
-    QUALIFIED: 'bg-teal-950/60 text-teal-300 border-teal-700/50',
-    MEETING_BOOKED: 'bg-violet-950/60 text-violet-300 border-violet-700/50',
-    OPPORTUNITY: 'bg-purple-950/60 text-purple-300 border-purple-700/50',
-    WON: 'bg-emerald-950/70 text-emerald-300 border-emerald-500/60 font-semibold',
-    LOST: 'bg-rose-950/50 text-rose-400 border-rose-800/40',
-    UNSUBSCRIBED: 'bg-red-950/70 text-red-400 border-red-800/50',
-    BOUNCED: 'bg-red-950/80 text-red-500 border-red-800/60',
+    NEW: 'bg-slate-100 text-slate-700 border-slate-200',
+    ENROLLED: 'bg-blue-50 text-blue-700 border-blue-200',
+    ACTIVE: 'bg-sky-50 text-sky-700 border-sky-200',
+    REPLIED: 'bg-amber-50 text-amber-700 border-amber-200',
+    QUALIFIED: 'bg-teal-50 text-teal-700 border-teal-200',
+    MEETING_BOOKED: 'bg-blue-100 text-blue-800 border-blue-300 font-medium',
+    OPPORTUNITY: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    WON: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
+    LOST: 'bg-rose-50 text-rose-700 border-rose-200',
+    UNSUBSCRIBED: 'bg-red-50 text-red-700 border-red-200',
+    BOUNCED: 'bg-red-100 text-red-800 border-red-200',
   };
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs border font-medium ${styles[status]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs border font-medium ${styles[status]}`}>
       {status.replace('_', ' ')}
     </span>
   );
@@ -76,18 +76,18 @@ export const StageBadge: React.FC<{ stage: DealStage }> = ({ stage }) => {
   };
 
   const colors: Record<DealStage, string> = {
-    NEW_DISCOVERED: 'bg-slate-800 text-slate-300 border-slate-700',
-    CONTACTED: 'bg-blue-900/40 text-blue-300 border-blue-800',
-    ENGAGED: 'bg-indigo-900/40 text-indigo-300 border-indigo-800',
-    QUALIFIED: 'bg-cyan-900/40 text-cyan-300 border-cyan-800',
-    MEETING_SCHEDULED: 'bg-violet-900/50 text-violet-300 border-violet-700 font-semibold',
-    PROPOSAL: 'bg-amber-900/40 text-amber-300 border-amber-700',
-    WON: 'bg-emerald-900/50 text-emerald-300 border-emerald-600 font-bold',
-    LOST: 'bg-rose-900/40 text-rose-400 border-rose-800',
+    NEW_DISCOVERED: 'bg-slate-100 text-slate-700 border-slate-200',
+    CONTACTED: 'bg-blue-50 text-blue-700 border-blue-200',
+    ENGAGED: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    QUALIFIED: 'bg-teal-50 text-teal-700 border-teal-200',
+    MEETING_SCHEDULED: 'bg-blue-100 text-blue-800 border-blue-300 font-semibold',
+    PROPOSAL: 'bg-amber-50 text-amber-700 border-amber-200',
+    WON: 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold',
+    LOST: 'bg-rose-50 text-rose-700 border-rose-200',
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs border ${colors[stage]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs border ${colors[stage]}`}>
       {labels[stage]}
     </span>
   );

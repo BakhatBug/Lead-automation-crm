@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActiveTab } from './Sidebar.js';
-import { RefreshCw, Sparkles, Plus, Upload, Play } from 'lucide-react';
+import { RefreshCw, Sparkles, Plus, Upload, Database } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -53,25 +53,25 @@ export const Header: React.FC<HeaderProps> = ({
   const current = titles[activeTab] || titles.dashboard;
 
   return (
-    <header className="h-16 px-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 px-6 border-b border-slate-200 bg-white flex items-center justify-between sticky top-0 z-30 shadow-xs">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold text-white tracking-tight">{current.title}</h1>
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 font-mono">
+          <h1 className="text-base font-bold text-slate-900 tracking-tight">{current.title}</h1>
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
             {current.owner}
           </span>
         </div>
-        <p className="text-xs text-slate-400 truncate max-w-2xl">{current.subtitle}</p>
+        <p className="text-xs text-slate-500 truncate max-w-2xl">{current.subtitle}</p>
       </div>
 
       <div className="flex items-center gap-2">
         {onOpenSimulateReply && (
           <button
             onClick={onOpenSimulateReply}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-violet-600/20 text-violet-300 border border-violet-500/30 hover:bg-violet-600/30 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
             title="Simulate an incoming email reply to test AI Intent Classification and threading"
           >
-            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+            <Sparkles className="h-3.5 w-3.5 text-blue-600" />
             Simulate Reply
           </button>
         )}
@@ -79,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
         {onOpenImport && activeTab === 'leads' && (
           <button
             onClick={onOpenImport}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xs"
           >
             <Upload className="h-3.5 w-3.5" />
             Import CSV
@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
         {onOpenNewCampaign && activeTab === 'campaigns' && (
           <button
             onClick={onOpenNewCampaign}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-xs"
           >
             <Plus className="h-3.5 w-3.5" />
             New Campaign
@@ -98,11 +98,11 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={onResetSeed}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-800 transition-all"
-          title="Reset local mock database to fresh initial state"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 transition-all shadow-xs"
+          title="Reset SQLite database with fresh seed data"
         >
-          <RefreshCw className="h-3.5 w-3.5" />
-          Reset Mock Data
+          <Database className="h-3.5 w-3.5 text-blue-600" />
+          Reset DB Data
         </button>
       </div>
     </header>

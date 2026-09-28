@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../api/index.js';
-import { Lead, LeadStatus } from '../../types/index.js';
+import { Lead } from '../../types/index.js';
 import { StatusBadge } from '../../components/Badge.js';
 import { LeadImportModal } from './LeadImportModal.js';
 import { LeadDetailDrawer } from './LeadDetailDrawer.js';
 import { SuppressionListModal } from './SuppressionListModal.js';
-import { Search, Upload, ShieldCheck, Filter, ChevronRight, UserPlus, CheckCircle } from 'lucide-react';
+import { Search, Upload, ShieldCheck, ChevronRight } from 'lucide-react';
 
 interface LeadsViewProps {
   onOpenConvertModal?: (lead: Lead) => void;
@@ -51,10 +51,10 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-    if (score >= 70) return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-    if (score >= 50) return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
-    return 'text-slate-400 bg-slate-800 border-slate-700';
+    if (score >= 85) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    if (score >= 70) return 'text-blue-700 bg-blue-50 border-blue-200';
+    if (score >= 50) return 'text-amber-700 bg-amber-50 border-amber-200';
+    return 'text-slate-600 bg-slate-100 border-slate-200';
   };
 
   return (
@@ -62,24 +62,24 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
       {/* Top Banner / Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Leads & Account Intelligence</h2>
-          <p className="text-xs text-slate-400">
-            {leads.length} verified prospect records with deterministic ICP scoring
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Leads & Account Intelligence</h2>
+          <p className="text-xs text-slate-500">
+            {leads.length} verified prospect records with transparent scoring from SQLite database
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsSuppressionOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-xs"
           >
-            <ShieldCheck className="h-4 w-4 text-rose-400" />
+            <ShieldCheck className="h-4 w-4 text-rose-500" />
             Suppression List
           </button>
 
           <button
             onClick={() => setIsImportOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all"
           >
             <Upload className="h-4 w-4" />
             Import CSV Leads
@@ -90,13 +90,13 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
       {/* Search & Status Filters */}
       <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search prospect, company, title..."
-            className="w-full rounded-xl border border-slate-800 bg-slate-900/80 pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none shadow-xs"
           />
         </div>
 
@@ -107,8 +107,8 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
               onClick={() => setSelectedStatus(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 selectedStatus === st
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {st === 'ALL' ? 'All Leads' : st.replace('_', ' ')}
@@ -118,9 +118,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
       </div>
 
       {/* Leads Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800">
+          <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
             <tr>
               <th className="py-3 px-4 font-semibold">Prospect</th>
               <th className="py-3 px-4 font-semibold">Title & Role</th>
@@ -131,11 +131,11 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
               <th className="py-3 px-4 font-semibold text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 bg-slate-950">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {loading ? (
               <tr>
                 <td colSpan={7} className="py-12 text-center text-slate-500">
-                  Loading lead intelligence...
+                  Loading lead intelligence from SQLite...
                 </td>
               </tr>
             ) : leads.length === 0 ? (
@@ -149,18 +149,18 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
                 <tr
                   key={lead.id}
                   onClick={() => setActiveLead(lead)}
-                  className="hover:bg-slate-900/50 cursor-pointer transition-all group"
+                  className="hover:bg-blue-50/40 cursor-pointer transition-all group"
                 >
                   <td className="py-3 px-4">
-                    <div className="font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                    <div className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {lead.firstName} {lead.lastName}
                     </div>
-                    <div className="font-mono text-[11px] text-slate-400">{lead.email}</div>
+                    <div className="font-mono text-[11px] text-slate-500">{lead.email}</div>
                   </td>
-                  <td className="py-3 px-4 text-slate-300 font-medium">{lead.title}</td>
+                  <td className="py-3 px-4 text-slate-700 font-medium">{lead.title}</td>
                   <td className="py-3 px-4">
-                    <div className="text-white font-medium">{lead.company}</div>
-                    <div className="text-[11px] text-slate-400">{lead.industry || 'Technology'}</div>
+                    <div className="text-slate-900 font-medium">{lead.company}</div>
+                    <div className="text-[11px] text-slate-500">{lead.industry || 'Technology'}</div>
                   </td>
                   <td className="py-3 px-4">
                     <span
@@ -174,11 +174,11 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
                   <td className="py-3 px-4">
                     <StatusBadge status={lead.status} />
                   </td>
-                  <td className="py-3 px-4 text-slate-400 max-w-[150px] truncate">
-                    {lead.campaignName || <span className="text-slate-600">None</span>}
+                  <td className="py-3 px-4 text-slate-500 max-w-[150px] truncate">
+                    {lead.campaignName || <span className="text-slate-400">None</span>}
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="text-indigo-400 hover:text-indigo-300 text-xs font-semibold inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <span className="text-blue-600 hover:text-blue-700 text-xs font-semibold inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                       Lead 360
                       <ChevronRight className="h-3.5 w-3.5" />
                     </span>
@@ -194,9 +194,7 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
       <LeadImportModal
         isOpen={isImportOpen}
         onClose={() => setIsImportOpen(false)}
-        onSuccess={() => {
-          loadLeads();
-        }}
+        onSuccess={() => loadLeads()}
       />
 
       {/* Suppression List Modal */}

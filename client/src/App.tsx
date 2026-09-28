@@ -97,7 +97,7 @@ export function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#090d16] text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans">
       {/* Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -118,9 +118,9 @@ export function App() {
 
         {/* Toast Alert */}
         {toastMessage && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-lg animate-in fade-in">
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between shadow-sm animate-in fade-in">
             <span>✨ {toastMessage}</span>
-            <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white">
+            <button onClick={() => setToastMessage(null)} className="text-emerald-600 hover:text-emerald-800 font-bold">
               ✕
             </button>
           </div>

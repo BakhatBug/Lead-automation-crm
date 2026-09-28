@@ -57,74 +57,77 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-500/20 text-indigo-400">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
               <DollarSign className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Create CRM Opportunity ($ Deal)</h2>
-              <p className="text-xs text-slate-400">Add to revenue pipeline</p>
+              <h2 className="text-base font-bold text-slate-900">Create CRM Opportunity ($ Deal)</h2>
+              <p className="text-xs text-slate-500">Add to revenue pipeline</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-300">Opportunity Title *</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Opportunity Title *</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Acme Corp - 25 Seat Expansion"
-              className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Company Name *</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Company Name *</label>
               <input
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Primary Contact</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Primary Contact</label>
               <input
                 type="text"
                 value={contactName}
                 onChange={(e) => setContactName(e.target.value)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Deal Value ($ USD) *</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Deal Value ($ USD) *</label>
               <input
                 type="number"
                 step="1000"
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-emerald-400 font-mono font-bold focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-blue-600 font-mono font-bold focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Initial Stage</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Initial Stage</label>
               <select
                 value={stage}
                 onChange={(e) => setStage(e.target.value as any)}
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               >
                 <option value="QUALIFIED">Qualified</option>
                 <option value="MEETING_SCHEDULED">Meeting Scheduled</option>
@@ -134,28 +137,28 @@ export const NewDealModal: React.FC<NewDealModalProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-slate-300">Target Close Date</label>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Target Close Date</label>
             <input
               type="date"
               value={expectedCloseDate}
               onChange={(e) => setExpectedCloseDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:outline-none font-mono"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none font-mono shadow-sm"
             />
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+              className="px-5 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 transition-all"
             >
               {loading ? 'Creating...' : 'Create Deal'}
             </button>

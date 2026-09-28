@@ -18,40 +18,28 @@ export const StatCard: React.FC<StatCardProps> = ({
   isPositive = true,
   icon: Icon,
   subtitle,
-  color = 'indigo',
 }) => {
-  const colorGradients = {
-    indigo: 'from-indigo-500/10 to-indigo-500/0 border-indigo-500/20 text-indigo-400',
-    emerald: 'from-emerald-500/10 to-emerald-500/0 border-emerald-500/20 text-emerald-400',
-    violet: 'from-violet-500/10 to-violet-500/0 border-violet-500/20 text-violet-400',
-    amber: 'from-amber-500/10 to-amber-500/0 border-amber-500/20 text-amber-400',
-    blue: 'from-blue-500/10 to-blue-500/0 border-blue-500/20 text-blue-400',
-  };
-
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl border bg-slate-900/60 p-5 shadow-sm backdrop-blur-sm transition-all hover:border-slate-700 ${colorGradients[color].split(' ')[2]}`}
-    >
-      <div className={`absolute top-0 right-0 -mr-6 -mt-6 h-24 w-24 rounded-full bg-gradient-to-br ${colorGradients[color]} opacity-40 blur-xl`} />
+    <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300 hover:shadow-sm">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{title}</span>
-        <div className={`rounded-lg bg-slate-800/80 p-2.5 ${colorGradients[color].split(' ').pop()}`}>
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{title}</span>
+        <div className="rounded-xl bg-blue-50 border border-blue-100 p-2 text-blue-600">
           <Icon className="h-5 w-5" />
         </div>
       </div>
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="text-2xl font-bold tracking-tight text-white">{value}</span>
+        <span className="text-2xl font-extrabold tracking-tight text-slate-900">{value}</span>
         {change && (
           <span
-            className={`text-xs font-semibold ${
-              isPositive ? 'text-emerald-400' : 'text-rose-400'
+            className={`text-xs font-bold px-1.5 py-0.5 rounded ${
+              isPositive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
             }`}
           >
             {change}
           </span>
         )}
       </div>
-      {subtitle && <p className="mt-1 text-xs text-slate-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1.5 text-xs text-slate-500">{subtitle}</p>}
     </div>
   );
 };

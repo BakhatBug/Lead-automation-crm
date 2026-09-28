@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../../api/index.js';
 import { SequenceStep, Mailbox } from '../../types/index.js';
 import { SequenceTimelineEditor } from './SequenceTimelineEditor.js';
-import { X, Sparkles, Send, ArrowRight } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 
 interface CampaignWizardModalProps {
   isOpen: boolean;
@@ -99,25 +99,25 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-4xl rounded-2xl border border-slate-800 bg-slate-950 p-6 shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
-              Module 2 Feature
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              Module 2
             </span>
-            <h2 className="text-lg font-bold text-white">Create New Outbound Campaign</h2>
+            <h2 className="text-lg font-bold text-slate-900">Create New Outbound Campaign</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+          <div className="mt-3 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
             {error}
           </div>
         )}
@@ -125,44 +125,44 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
         <div className="flex-1 overflow-y-auto space-y-6 py-4 pr-1">
           {/* Basic Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Campaign Name *</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Campaign Name *</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Q4 FinTech CTO Outreach"
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-slate-300">Target ICP Segment</label>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Target ICP Segment</label>
               <input
                 type="text"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
                 placeholder="e.g. Series A-C SaaS, VP Sales, 50-300 reps"
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
 
-            <div className="md:col-span-2 space-y-1">
-              <label className="text-xs font-medium text-slate-300">Strategic Objective & Pitch</label>
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Strategic Objective & Pitch</label>
               <input
                 type="text"
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
                 placeholder="e.g. Book 20 discovery calls for AI pipeline acceleration"
-                className="w-full rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
               />
             </div>
           </div>
 
           {/* Mailbox Pool */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-300">Sending Mailbox Pool</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs font-bold text-slate-700">Sending Mailbox Pool</label>
+            <div className="grid grid-cols-2 gap-2.5">
               {mailboxes.map((box) => {
                 const isSelected = selectedMailboxes.includes(box.id);
                 return (
@@ -176,17 +176,17 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
                         setSelectedMailboxes([...selectedMailboxes, box.id]);
                       }
                     }}
-                    className={`p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between ${
+                    className={`p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between shadow-sm ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-950/20 text-white'
-                        : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700'
+                        ? 'border-blue-600 bg-blue-50/70 text-slate-900 ring-1 ring-blue-600'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300'
                     }`}
                   >
                     <div>
-                      <div className="font-semibold text-slate-200">{box.name}</div>
-                      <div className="font-mono text-[11px] text-slate-400">{box.email}</div>
+                      <div className="font-bold text-slate-900">{box.name}</div>
+                      <div className="font-mono text-[11px] text-slate-500">{box.email}</div>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800">
+                    <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
                       {box.provider}
                     </span>
                   </button>
@@ -196,12 +196,12 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
           </div>
 
           {/* Sequence Steps */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Sequence Automation Flow
               </label>
-              <span className="text-xs text-indigo-400">{steps.length} Steps Configured</span>
+              <span className="text-xs font-semibold text-blue-600">{steps.length} Steps Configured</span>
             </div>
 
             <SequenceTimelineEditor steps={steps} onChange={setSteps} />
@@ -209,17 +209,17 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-800 pt-4">
+        <div className="flex items-center justify-between border-t border-slate-200 pt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white"
+            className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleCreate}
             disabled={loading || !name.trim()}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 transition-all"
           >
             {loading ? 'Creating...' : 'Save & Publish Campaign'}
             <ArrowRight className="h-3.5 w-3.5" />
