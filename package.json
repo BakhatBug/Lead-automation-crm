@@ -1,0 +1,15 @@
+{
+  "name": "lead-automation-crm",
+  "version": "1.0.0",
+  "description": "AI Sales Outbound CRM - Fullstack Operating System",
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "test": "echo \"Ready for module test suites\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

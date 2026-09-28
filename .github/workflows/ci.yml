@@ -1,0 +1,35 @@
+name: CI Build & Typecheck
+
+on:
+  push:
+    branches: [ main, staging, "module/**" ]
+  pull_request:
+    branches: [ main, staging ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm ci || npm install
+
+      - name: Install & Build Server
+        run: |
+          cd server
+          npm install
+          npm run build
+
+      - name: Install & Build Client
+        run: |
+          cd client
+          npm install
+          npm run build
