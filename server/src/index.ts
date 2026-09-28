@@ -54,7 +54,7 @@ app.post('/api/reset-seed', (_req, res) => {
   res.json({ success: true, message: 'Database reset to initial sample state.' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n======================================================`);
   console.log(`🚀 AI Sales Outbound CRM Backend API running on port ${PORT}`);
   console.log(`👉 Module 1 (Leads & Enrichment):    http://localhost:${PORT}/api/leads`);
