@@ -35,6 +35,8 @@ export interface Lead {
   tags: string[];
   notes?: string;
   verifiedEmail: boolean;
+  customAttributes?: Record<string, any>;
+  userId?: string;
   createdAt: string;
   updatedAt: string;
 }

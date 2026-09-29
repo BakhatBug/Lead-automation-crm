@@ -134,54 +134,128 @@ export class LeadsService {
     return mapping;
   }
 
-  // Ingest & Validate CSV rows into Leads
+  // Ingest & Validate CSV rows into Leads with Smart Deduplication & Merging
   static processImport(
     rows: CSVRow[],
     mapping: ColumnMapping,
-    tags: string[] = ['CSV Import']
+    tags: string[] = ['CSV Import'],
+    userId: string = 'default_user'
   ): {
     imported: Lead[];
+    mergedCount: number;
     duplicates: number;
     suppressed: number;
     invalidEmails: number;
   } {
     const imported: Lead[] = [];
+    let mergedCount = 0;
     let duplicates = 0;
     let suppressed = 0;
     let invalidEmails = 0;
 
+    const mappedHeaders = new Set(Object.values(mapping).filter(Boolean));
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     for (const row of rows) {
-      const email = (row[mapping.email] || '').trim();
+      const rawEmail = (row[mapping.email] || '').trim();
+      const email = emailRegex.test(rawEmail) ? rawEmail : '';
 
-      // Check email format
-      if (!email || !emailRegex.test(email)) {
+      if (rawEmail && !email) {
         invalidEmails++;
-        continue;
       }
 
-      // Check suppression list
-      if (db.isSuppressed(email)) {
+      // Check suppression list if email exists
+      if (email && db.isSuppressed(email)) {
         suppressed++;
         continue;
       }
 
-      // Check duplicate
-      if (db.getLeadByEmail(email)) {
-        duplicates++;
+      const firstName = (row[mapping.firstName] || '').trim();
+      const lastName = (row[mapping.lastName] || '').trim();
+      const fullName = `${firstName} ${lastName}`.trim();
+      const company = (row[mapping.company] || (email ? email.split('@')[1]?.split('.')[0] : 'Unknown')).trim();
+      const title = (row[mapping.title] || 'Decision Maker').trim();
+      const phone = mapping.phone ? (row[mapping.phone] || '').trim() || undefined : undefined;
+      const website = mapping.website ? (row[mapping.website] || '').trim() || undefined : undefined;
+      const industry = mapping.industry ? (row[mapping.industry] || 'Technology').trim() : 'Technology';
+      const employeeCount = mapping.employeeCount && row[mapping.employeeCount] ? Number(row[mapping.employeeCount]) || 50 : 50;
+
+      // Collect unmapped columns into customAttributes
+      const customAttributes: Record<string, any> = {};
+      Object.keys(row).forEach((h) => {
+        if (!mappedHeaders.has(h) && row[h] && row[h].trim()) {
+          customAttributes[h] = row[h].trim();
+        }
+      });
+
+      // Try finding existing matching lead in SQLite DB or current batch
+      let existingMatch = db.findMatchingLead({
+        email: email || undefined,
+        name: fullName || undefined,
+        company: company !== 'Unknown' ? company : undefined,
+        website,
+        phone,
+      });
+
+      if (!existingMatch && email) {
+        existingMatch = imported.find((l) => l.email && l.email.toLowerCase() === email.toLowerCase());
+      }
+
+      if (existingMatch) {
+        // Perform Smart Non-Destructive Merge into existing lead
+        const mergedCustom = { ...existingMatch.customAttributes, ...customAttributes };
+        const mergedTags = Array.from(new Set([...(existingMatch.tags || []), ...tags]));
+
+        const updatedFirstName = existingMatch.firstName || firstName;
+        const updatedLastName = existingMatch.lastName || lastName;
+        const updatedEmail = existingMatch.email || email;
+        const updatedPhone = existingMatch.phone || phone;
+        const updatedCompany = existingMatch.company || company;
+        const updatedTitle = existingMatch.title || title;
+        const updatedWebsite = existingMatch.website || website;
+        const updatedIndustry = existingMatch.industry || industry;
+        const updatedEmployeeCount = existingMatch.employeeCount || employeeCount;
+
+        const { score, breakdown } = this.calculateLeadScore({
+          title: updatedTitle,
+          industry: updatedIndustry,
+          employeeCount: updatedEmployeeCount,
+          phone: updatedPhone,
+          website: updatedWebsite,
+          firstName: updatedFirstName,
+          lastName: updatedLastName,
+        });
+
+        const updatedLead = db.updateLead(existingMatch.id, {
+          firstName: updatedFirstName,
+          lastName: updatedLastName,
+          email: updatedEmail,
+          phone: updatedPhone,
+          company: updatedCompany,
+          title: updatedTitle,
+          website: updatedWebsite,
+          industry: updatedIndustry,
+          employeeCount: updatedEmployeeCount,
+          score,
+          scoreBreakdown: breakdown,
+          tags: mergedTags,
+          customAttributes: mergedCustom,
+          userId: existingMatch.userId || userId,
+        });
+
+        if (updatedLead) {
+          // Update in-memory imported array if present
+          const idx = imported.findIndex((l) => l.id === existingMatch.id);
+          if (idx !== -1) imported[idx] = updatedLead;
+          else imported.push(updatedLead);
+          mergedCount++;
+        } else {
+          duplicates++;
+        }
         continue;
       }
 
-      const firstName = row[mapping.firstName] || '';
-      const lastName = row[mapping.lastName] || '';
-      const company = row[mapping.company] || (email.split('@')[1] ? email.split('@')[1].split('.')[0] : 'Unknown');
-      const title = row[mapping.title] || 'Decision Maker';
-      const phone = mapping.phone ? row[mapping.phone] : undefined;
-      const website = mapping.website ? row[mapping.website] : undefined;
-      const industry = mapping.industry ? row[mapping.industry] : 'Technology';
-      const employeeCount = mapping.employeeCount ? Number(row[mapping.employeeCount]) || 50 : 50;
-
+      // No match found -> Calculate ICP score and create new Lead
       const { score, breakdown } = this.calculateLeadScore({
         title,
         industry,
@@ -207,27 +281,27 @@ export class LeadsService {
         scoreBreakdown: breakdown,
         status: 'NEW',
         tags,
-        verifiedEmail: true,
+        verifiedEmail: Boolean(email),
+        customAttributes,
+        userId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
+      db.addLead(newLead);
       imported.push(newLead);
     }
 
-    if (imported.length > 0) {
-      db.addLeads(imported);
-      db.addAuditLog({
-        id: `audit-${uuidv4().slice(0, 8)}`,
-        eventType: 'LEADS_IMPORTED',
-        entityType: 'Lead',
-        entityId: 'batch',
-        description: `Imported ${imported.length} leads (Skipped: ${duplicates} duplicates, ${suppressed} suppressed, ${invalidEmails} invalid emails).`,
-        actor: 'User',
-        timestamp: new Date().toISOString(),
-      });
-    }
+    db.addAuditLog({
+      id: `audit-${uuidv4().slice(0, 8)}`,
+      eventType: 'LEADS_IMPORTED',
+      entityType: 'Lead',
+      entityId: 'batch',
+      description: `Processed ${rows.length} CSV rows (${imported.length - mergedCount} new created, ${mergedCount} enriched & merged, ${suppressed} suppressed, ${invalidEmails} invalid emails).`,
+      actor: 'User',
+      timestamp: new Date().toISOString(),
+    });
 
-    return { imported, duplicates, suppressed, invalidEmails };
+    return { imported, mergedCount, duplicates, suppressed, invalidEmails };
   }
 }

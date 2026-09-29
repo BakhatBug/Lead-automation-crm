@@ -141,6 +141,7 @@ export class LeadsController {
       res.json({
         success: true,
         importedCount: result.imported.length,
+        mergedCount: result.mergedCount,
         duplicates: result.duplicates,
         suppressed: result.suppressed,
         invalidEmails: result.invalidEmails,

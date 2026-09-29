@@ -49,13 +49,25 @@ export function initDatabaseSchema() {
       tags TEXT,
       notes TEXT,
       verifiedEmail INTEGER DEFAULT 1,
+      customAttributes TEXT,
+      userId TEXT,
       createdAt TEXT,
       updatedAt TEXT
     );
+  `);
 
+  try {
+    sqliteDb.exec(`ALTER TABLE leads ADD COLUMN customAttributes TEXT;`);
+  } catch (e) {}
+  try {
+    sqliteDb.exec(`ALTER TABLE leads ADD COLUMN userId TEXT;`);
+  } catch (e) {}
+
+  sqliteDb.exec(`
     CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
     CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
     CREATE INDEX IF NOT EXISTS idx_leads_campaignId ON leads(campaignId);
+    CREATE INDEX IF NOT EXISTS idx_leads_userId ON leads(userId);
 
     CREATE TABLE IF NOT EXISTS campaigns (
       id TEXT PRIMARY KEY,

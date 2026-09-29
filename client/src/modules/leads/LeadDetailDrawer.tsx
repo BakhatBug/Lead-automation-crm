@@ -173,6 +173,23 @@ export const LeadDetailDrawer: React.FC<LeadDetailDrawerProps> = ({
             </div>
           </div>
 
+          {/* Custom Attributes & Extended CSV Data */}
+          {lead.customAttributes && Object.keys(lead.customAttributes).length > 0 && (
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Custom CSV Attributes
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(lead.customAttributes).map(([key, val]) => (
+                  <div key={key} className="p-2 rounded-lg bg-amber-50/60 border border-amber-200/80">
+                    <span className="font-semibold text-amber-900 block truncate">{key}</span>
+                    <span className="text-slate-700 font-mono text-[11px] truncate block">{String(val)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tags */}
           {lead.tags && lead.tags.length > 0 && (
             <div className="space-y-2">

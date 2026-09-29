@@ -30,18 +30,52 @@ class SQLiteStore {
   }
 
   getLeadByEmail(email: string): Lead | undefined {
+    if (!email || !email.trim()) return undefined;
     const row = sqliteDb.prepare('SELECT * FROM leads WHERE LOWER(email) = LOWER(?)').get(email.trim()) as any;
     return row ? this.mapLeadRow(row) : undefined;
+  }
+
+  findMatchingLead(opts: { email?: string; name?: string; company?: string; website?: string; phone?: string }): Lead | undefined {
+    if (opts.email && opts.email.trim()) {
+      const byEmail = this.getLeadByEmail(opts.email);
+      if (byEmail) return byEmail;
+    }
+
+    if (opts.name && opts.name.trim() && (opts.company || opts.website)) {
+      const cleanName = opts.name.trim().toLowerCase();
+      const cleanComp = (opts.company || opts.website || '').trim().toLowerCase();
+
+      const rows = sqliteDb.prepare('SELECT * FROM leads').all() as any[];
+      const match = rows.find((r) => {
+        const fullName = `${r.firstName || ''} ${r.lastName || ''}`.trim().toLowerCase();
+        const comp = (r.company || r.website || '').trim().toLowerCase();
+        return fullName === cleanName && (comp === cleanComp || comp.includes(cleanComp) || cleanComp.includes(comp));
+      });
+      if (match) return this.mapLeadRow(match);
+    }
+
+    if (opts.phone && opts.phone.trim()) {
+      const cleanPhone = opts.phone.replace(/[^0-9]/g, '');
+      if (cleanPhone.length >= 7) {
+        const rows = sqliteDb.prepare("SELECT * FROM leads WHERE phone IS NOT NULL AND phone != ''").all() as any[];
+        const match = rows.find((r) => r.phone && r.phone.replace(/[^0-9]/g, '') === cleanPhone);
+        if (match) return this.mapLeadRow(match);
+      }
+    }
+
+    return undefined;
   }
 
   addLead(lead: Lead): Lead {
     const stmt = sqliteDb.prepare(`
       INSERT INTO leads (
         id, firstName, lastName, email, phone, company, title, website, industry, employeeCount,
-        score, scoreBreakdown, status, campaignId, campaignName, tags, notes, verifiedEmail, createdAt, updatedAt
+        score, scoreBreakdown, status, campaignId, campaignName, tags, notes, verifiedEmail,
+        customAttributes, userId, createdAt, updatedAt
       ) VALUES (
         @id, @firstName, @lastName, @email, @phone, @company, @title, @website, @industry, @employeeCount,
-        @score, @scoreBreakdown, @status, @campaignId, @campaignName, @tags, @notes, @verifiedEmail, @createdAt, @updatedAt
+        @score, @scoreBreakdown, @status, @campaignId, @campaignName, @tags, @notes, @verifiedEmail,
+        @customAttributes, @userId, @createdAt, @updatedAt
       )
     `);
 
@@ -49,9 +83,9 @@ class SQLiteStore {
       id: lead.id,
       firstName: lead.firstName || '',
       lastName: lead.lastName || '',
-      email: lead.email,
+      email: lead.email || null,
       phone: lead.phone || null,
-      company: lead.company,
+      company: lead.company || 'Unknown',
       title: lead.title || 'Decision Maker',
       website: lead.website || null,
       industry: lead.industry || null,
@@ -64,6 +98,8 @@ class SQLiteStore {
       tags: JSON.stringify(lead.tags || []),
       notes: lead.notes || null,
       verifiedEmail: lead.verifiedEmail ? 1 : 0,
+      customAttributes: JSON.stringify(lead.customAttributes || {}),
+      userId: lead.userId || 'default_user',
       createdAt: lead.createdAt || new Date().toISOString(),
       updatedAt: lead.updatedAt || new Date().toISOString(),
     });
@@ -74,10 +110,12 @@ class SQLiteStore {
     const insert = sqliteDb.prepare(`
       INSERT INTO leads (
         id, firstName, lastName, email, phone, company, title, website, industry, employeeCount,
-        score, scoreBreakdown, status, campaignId, campaignName, tags, notes, verifiedEmail, createdAt, updatedAt
+        score, scoreBreakdown, status, campaignId, campaignName, tags, notes, verifiedEmail,
+        customAttributes, userId, createdAt, updatedAt
       ) VALUES (
         @id, @firstName, @lastName, @email, @phone, @company, @title, @website, @industry, @employeeCount,
-        @score, @scoreBreakdown, @status, @campaignId, @campaignName, @tags, @notes, @verifiedEmail, @createdAt, @updatedAt
+        @score, @scoreBreakdown, @status, @campaignId, @campaignName, @tags, @notes, @verifiedEmail,
+        @customAttributes, @userId, @createdAt, @updatedAt
       )
     `);
 
@@ -87,9 +125,9 @@ class SQLiteStore {
           id: lead.id,
           firstName: lead.firstName || '',
           lastName: lead.lastName || '',
-          email: lead.email,
+          email: lead.email || null,
           phone: lead.phone || null,
-          company: lead.company,
+          company: lead.company || 'Unknown',
           title: lead.title || 'Decision Maker',
           website: lead.website || null,
           industry: lead.industry || null,
@@ -102,6 +140,8 @@ class SQLiteStore {
           tags: JSON.stringify(lead.tags || []),
           notes: lead.notes || null,
           verifiedEmail: lead.verifiedEmail ? 1 : 0,
+          customAttributes: JSON.stringify(lead.customAttributes || {}),
+          userId: lead.userId || 'default_user',
           createdAt: lead.createdAt || new Date().toISOString(),
           updatedAt: lead.updatedAt || new Date().toISOString(),
         });
@@ -128,7 +168,8 @@ class SQLiteStore {
         company = @company, title = @title, website = @website, industry = @industry,
         employeeCount = @employeeCount, score = @score, scoreBreakdown = @scoreBreakdown,
         status = @status, campaignId = @campaignId, campaignName = @campaignName,
-        tags = @tags, notes = @notes, verifiedEmail = @verifiedEmail, updatedAt = @updatedAt
+        tags = @tags, notes = @notes, verifiedEmail = @verifiedEmail,
+        customAttributes = @customAttributes, userId = @userId, updatedAt = @updatedAt
       WHERE id = @id
     `);
 
@@ -136,9 +177,9 @@ class SQLiteStore {
       id: merged.id,
       firstName: merged.firstName || '',
       lastName: merged.lastName || '',
-      email: merged.email,
+      email: merged.email || null,
       phone: merged.phone || null,
-      company: merged.company,
+      company: merged.company || 'Unknown',
       title: merged.title || 'Decision Maker',
       website: merged.website || null,
       industry: merged.industry || null,
@@ -151,6 +192,8 @@ class SQLiteStore {
       tags: JSON.stringify(merged.tags || []),
       notes: merged.notes || null,
       verifiedEmail: merged.verifiedEmail ? 1 : 0,
+      customAttributes: JSON.stringify(merged.customAttributes || {}),
+      userId: merged.userId || 'default_user',
       updatedAt: merged.updatedAt,
     });
 
@@ -163,10 +206,21 @@ class SQLiteStore {
   }
 
   private mapLeadRow(row: any): Lead {
+    let customAttrs = {};
+    if (row.customAttributes) {
+      try {
+        customAttrs = typeof row.customAttributes === 'string' ? JSON.parse(row.customAttributes) : row.customAttributes;
+      } catch (e) {
+        customAttrs = {};
+      }
+    }
+
     return {
       ...row,
       scoreBreakdown: typeof row.scoreBreakdown === 'string' ? JSON.parse(row.scoreBreakdown) : row.scoreBreakdown,
       tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags || [],
+      customAttributes: customAttrs,
+      userId: row.userId || 'default_user',
       verifiedEmail: Boolean(row.verifiedEmail),
     };
   }

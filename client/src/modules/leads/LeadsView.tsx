@@ -155,7 +155,9 @@ export const LeadsView: React.FC<LeadsViewProps> = ({ onOpenConvertModal }) => {
                     <div className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                       {lead.firstName} {lead.lastName}
                     </div>
-                    <div className="font-mono text-[11px] text-slate-500">{lead.email}</div>
+                    <div className="font-mono text-[11px] text-slate-500">
+                      {lead.email ? lead.email : <span className="italic text-slate-400">N/A (No Email)</span>}
+                    </div>
                   </td>
                   <td className="py-3 px-4 text-slate-700 font-medium">{lead.title}</td>
                   <td className="py-3 px-4">
