@@ -83,7 +83,13 @@ export function initDatabaseSchema() {
       spfValid INTEGER DEFAULT 1,
       dkimValid INTEGER DEFAULT 1,
       dmarcValid INTEGER DEFAULT 1,
-      lastSyncAt TEXT
+      lastSyncAt TEXT,
+      smtpHost TEXT,
+      smtpPort INTEGER,
+      imapHost TEXT,
+      imapPort INTEGER,
+      username TEXT,
+      useSsl INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS conversations (
@@ -196,6 +202,19 @@ export function initDatabaseSchema() {
       timestamp TEXT
     );
   `);
+
+  // Safe runtime column migration for existing SQLite databases
+  try {
+    const columns = (sqliteDb.pragma('table_info(mailboxes)') as Array<{ name: string }>).map((c) => c.name);
+    if (!columns.includes('smtpHost')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN smtpHost TEXT');
+    if (!columns.includes('smtpPort')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN smtpPort INTEGER');
+    if (!columns.includes('imapHost')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN imapHost TEXT');
+    if (!columns.includes('imapPort')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN imapPort INTEGER');
+    if (!columns.includes('username')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN username TEXT');
+    if (!columns.includes('useSsl')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN useSsl INTEGER DEFAULT 1');
+  } catch (e) {
+    console.error('[Database Migration Error]', e);
+  }
 }
 
 export function feedDatabaseData(forceReset: boolean = false) {

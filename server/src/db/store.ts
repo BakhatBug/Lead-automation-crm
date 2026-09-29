@@ -260,6 +260,7 @@ class SQLiteStore {
       spfValid: Boolean(r.spfValid),
       dkimValid: Boolean(r.dkimValid),
       dmarcValid: Boolean(r.dmarcValid),
+      useSsl: r.useSsl !== null ? Boolean(r.useSsl) : true,
     }));
   }
 
@@ -271,15 +272,18 @@ class SQLiteStore {
       spfValid: Boolean(r.spfValid),
       dkimValid: Boolean(r.dkimValid),
       dmarcValid: Boolean(r.dmarcValid),
+      useSsl: r.useSsl !== null ? Boolean(r.useSsl) : true,
     };
   }
 
   addMailbox(m: Mailbox): Mailbox {
     const stmt = sqliteDb.prepare(`
       INSERT INTO mailboxes (
-        id, provider, email, name, status, dailySendLimit, sentToday, warmUpProgress, spfValid, dkimValid, dmarcValid, lastSyncAt
+        id, provider, email, name, status, dailySendLimit, sentToday, warmUpProgress, spfValid, dkimValid, dmarcValid, lastSyncAt,
+        smtpHost, smtpPort, imapHost, imapPort, username, useSsl
       ) VALUES (
-        @id, @provider, @email, @name, @status, @dailySendLimit, @sentToday, @warmUpProgress, @spfValid, @dkimValid, @dmarcValid, @lastSyncAt
+        @id, @provider, @email, @name, @status, @dailySendLimit, @sentToday, @warmUpProgress, @spfValid, @dkimValid, @dmarcValid, @lastSyncAt,
+        @smtpHost, @smtpPort, @imapHost, @imapPort, @username, @useSsl
       )
     `);
 
@@ -296,6 +300,12 @@ class SQLiteStore {
       dkimValid: m.dkimValid ? 1 : 0,
       dmarcValid: m.dmarcValid ? 1 : 0,
       lastSyncAt: m.lastSyncAt || new Date().toISOString(),
+      smtpHost: m.smtpHost || null,
+      smtpPort: m.smtpPort ?? null,
+      imapHost: m.imapHost || null,
+      imapPort: m.imapPort ?? null,
+      username: m.username || null,
+      useSsl: m.useSsl !== undefined ? (m.useSsl ? 1 : 0) : 1,
     });
 
     return m;
@@ -310,7 +320,9 @@ class SQLiteStore {
       UPDATE mailboxes SET
         provider = @provider, email = @email, name = @name, status = @status,
         dailySendLimit = @dailySendLimit, sentToday = @sentToday, warmUpProgress = @warmUpProgress,
-        spfValid = @spfValid, dkimValid = @dkimValid, dmarcValid = @dmarcValid, lastSyncAt = @lastSyncAt
+        spfValid = @spfValid, dkimValid = @dkimValid, dmarcValid = @dmarcValid, lastSyncAt = @lastSyncAt,
+        smtpHost = @smtpHost, smtpPort = @smtpPort, imapHost = @imapHost, imapPort = @imapPort,
+        username = @username, useSsl = @useSsl
       WHERE id = @id
     `);
 
@@ -327,6 +339,12 @@ class SQLiteStore {
       dkimValid: merged.dkimValid ? 1 : 0,
       dmarcValid: merged.dmarcValid ? 1 : 0,
       lastSyncAt: merged.lastSyncAt,
+      smtpHost: merged.smtpHost || null,
+      smtpPort: merged.smtpPort ?? null,
+      imapHost: merged.imapHost || null,
+      imapPort: merged.imapPort ?? null,
+      username: merged.username || null,
+      useSsl: merged.useSsl ? 1 : 0,
     });
 
     return merged;

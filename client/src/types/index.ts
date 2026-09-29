@@ -85,7 +85,7 @@ export interface Campaign {
   updatedAt: string;
 }
 
-export type MailboxProvider = 'GOOGLE' | 'MICROSOFT';
+export type MailboxProvider = 'GOOGLE' | 'MICROSOFT' | 'HOSTINGER' | 'ZOHO' | 'CUSTOM_SMTP';
 export type MailboxStatus = 'HEALTHY' | 'WARNING' | 'DISCONNECTED';
 
 export interface Mailbox {
@@ -101,6 +101,13 @@ export interface Mailbox {
   dkimValid: boolean;
   dmarcValid: boolean;
   lastSyncAt: string;
+  // Custom SMTP/IMAP credentials & host details
+  smtpHost?: string;
+  smtpPort?: number;
+  imapHost?: string;
+  imapPort?: number;
+  username?: string;
+  useSsl?: boolean;
 }
 
 export type EmailDirection = 'OUTBOUND' | 'INBOUND';

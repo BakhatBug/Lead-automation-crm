@@ -27,10 +27,47 @@ export class MailboxesController {
     res.json({ success: true, diagnostics });
   }
 
+  // POST /api/mailboxes/test-connection
+  static async testMailboxConnection(req: Request, res: Response) {
+    try {
+      const { provider, email, smtpHost, smtpPort, imapHost, imapPort, username, password } = req.body;
+      if (!email) {
+        return res.status(400).json({ success: false, error: 'Email address is required' });
+      }
+
+      const result = await MailboxesService.testConnectionHandshake({
+        provider: provider || 'GOOGLE',
+        email: email.trim().toLowerCase(),
+        smtpHost,
+        smtpPort: smtpPort ? Number(smtpPort) : undefined,
+        imapHost,
+        imapPort: imapPort ? Number(imapPort) : undefined,
+        username,
+        password,
+      });
+
+      res.json({ success: true, result });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   // POST /api/mailboxes/connect
   static connectMailbox(req: Request, res: Response) {
     try {
-      const { provider, email, name, dailySendLimit } = req.body;
+      const {
+        provider,
+        email,
+        name,
+        dailySendLimit,
+        smtpHost,
+        smtpPort,
+        imapHost,
+        imapPort,
+        username,
+        useSsl,
+      } = req.body;
+
       if (!provider || !email) {
         return res.status(400).json({ success: false, error: 'Provider and email are required' });
       }
@@ -38,7 +75,7 @@ export class MailboxesController {
       const mailboxId = `box-${uuidv4().slice(0, 8)}`;
       const newMailbox: Mailbox = {
         id: mailboxId,
-        provider: provider === 'MICROSOFT' ? 'MICROSOFT' : 'GOOGLE',
+        provider,
         email: email.trim().toLowerCase(),
         name: name || email,
         status: 'HEALTHY',
@@ -49,6 +86,12 @@ export class MailboxesController {
         dkimValid: true,
         dmarcValid: true,
         lastSyncAt: new Date().toISOString(),
+        smtpHost: smtpHost || (provider === 'HOSTINGER' ? 'smtp.hostinger.com' : provider === 'ZOHO' ? 'smtppro.zoho.com' : undefined),
+        smtpPort: smtpPort ? Number(smtpPort) : 465,
+        imapHost: imapHost || (provider === 'HOSTINGER' ? 'imap.hostinger.com' : provider === 'ZOHO' ? 'imappro.zoho.com' : undefined),
+        imapPort: imapPort ? Number(imapPort) : 993,
+        username: username || email,
+        useSsl: useSsl !== undefined ? Boolean(useSsl) : true,
       };
 
       db.addMailbox(newMailbox);

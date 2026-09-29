@@ -95,8 +95,16 @@ export const MailboxesView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                      {box.provider}
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                      {box.provider === 'HOSTINGER'
+                        ? '🟣 Hostinger Mail'
+                        : box.provider === 'ZOHO'
+                        ? '🟡 Zoho Mail'
+                        : box.provider === 'GOOGLE'
+                        ? '🇬 Google Workspace'
+                        : box.provider === 'MICROSOFT'
+                        ? 'Ⓜ️ Microsoft 365'
+                        : '⚙️ Custom SMTP'}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       {box.status}
@@ -163,8 +171,8 @@ export const MailboxesView: React.FC = () => {
               </div>
 
               {/* Sync Timestamp */}
-              <div className="pt-2 text-[10px] text-slate-400 font-mono flex items-center justify-between">
-                <span>RFC Threading: Active</span>
+              <div className="pt-2 text-[10px] text-slate-500 font-mono flex items-center justify-between">
+                <span className="font-semibold text-slate-600">{box.smtpHost ? `SMTP: ${box.smtpHost}:${box.smtpPort || 465}` : 'OAuth 2.0 Protocol'}</span>
                 <span>Last Synced: {new Date(box.lastSyncAt).toLocaleTimeString()}</span>
               </div>
             </div>

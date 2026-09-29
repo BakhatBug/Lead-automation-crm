@@ -190,12 +190,51 @@ export const api = {
     }>(`/mailboxes/${id}/health`);
   },
 
-  connectMailbox: async (data: { provider: string; email: string; name?: string; dailySendLimit?: number }) => {
+  connectMailbox: async (data: {
+    provider: string;
+    email: string;
+    name?: string;
+    dailySendLimit?: number;
+    smtpHost?: string;
+    smtpPort?: number;
+    imapHost?: string;
+    imapPort?: number;
+    username?: string;
+    useSsl?: boolean;
+  }) => {
     const res = await fetchJSON<{ success: boolean; mailbox: Mailbox }>('/mailboxes/connect', {
       method: 'POST',
       body: JSON.stringify(data),
     });
     return res.mailbox;
+  },
+
+  testMailboxConnection: async (data: {
+    provider: string;
+    email: string;
+    smtpHost?: string;
+    smtpPort?: number;
+    imapHost?: string;
+    imapPort?: number;
+    username?: string;
+    password?: string;
+  }) => {
+    return fetchJSON<{
+      success: boolean;
+      result: {
+        connected: boolean;
+        smtpStatus: string;
+        imapStatus: string;
+        latencyMs: number;
+        spfStatus: string;
+        dkimStatus: string;
+        dmarcStatus: string;
+        message: string;
+      };
+    }>('/mailboxes/test-connection', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   simulateInboundReply: async (data: {
