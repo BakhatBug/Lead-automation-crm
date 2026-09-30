@@ -309,24 +309,27 @@ class SQLiteStore {
   // --- Mailboxes ---
   getMailboxes(): Mailbox[] {
     const rows = sqliteDb.prepare('SELECT * FROM mailboxes ORDER BY name ASC').all() as any[];
-    return rows.map((r) => ({
-      ...r,
-      spfValid: Boolean(r.spfValid),
-      dkimValid: Boolean(r.dkimValid),
-      dmarcValid: Boolean(r.dmarcValid),
-      useSsl: r.useSsl !== null ? Boolean(r.useSsl) : true,
-    }));
+    return rows.map((r) => this.mapMailboxRow(r));
   }
 
   getMailboxById(id: string): Mailbox | undefined {
     const r = sqliteDb.prepare('SELECT * FROM mailboxes WHERE id = ?').get(id) as any;
     if (!r) return undefined;
+    return this.mapMailboxRow(r);
+  }
+
+  private mapMailboxRow(r: any): Mailbox {
     return {
       ...r,
       spfValid: Boolean(r.spfValid),
       dkimValid: Boolean(r.dkimValid),
       dmarcValid: Boolean(r.dmarcValid),
       useSsl: r.useSsl !== null ? Boolean(r.useSsl) : true,
+      warmupEnabled: r.warmupEnabled !== null && r.warmupEnabled !== undefined ? Boolean(r.warmupEnabled) : true,
+      warmupStartingLimit: r.warmupStartingLimit ?? 5,
+      warmupDailyIncrement: r.warmupDailyIncrement ?? 3,
+      warmupTargetLimit: r.warmupTargetLimit ?? 45,
+      warmupReplyRate: r.warmupReplyRate ?? 35,
     };
   }
 
@@ -334,10 +337,12 @@ class SQLiteStore {
     const stmt = sqliteDb.prepare(`
       INSERT INTO mailboxes (
         id, provider, email, name, status, dailySendLimit, sentToday, warmUpProgress, spfValid, dkimValid, dmarcValid, lastSyncAt,
-        smtpHost, smtpPort, imapHost, imapPort, username, useSsl
+        smtpHost, smtpPort, imapHost, imapPort, username, useSsl,
+        warmupEnabled, warmupStartingLimit, warmupDailyIncrement, warmupTargetLimit, warmupReplyRate
       ) VALUES (
         @id, @provider, @email, @name, @status, @dailySendLimit, @sentToday, @warmUpProgress, @spfValid, @dkimValid, @dmarcValid, @lastSyncAt,
-        @smtpHost, @smtpPort, @imapHost, @imapPort, @username, @useSsl
+        @smtpHost, @smtpPort, @imapHost, @imapPort, @username, @useSsl,
+        @warmupEnabled, @warmupStartingLimit, @warmupDailyIncrement, @warmupTargetLimit, @warmupReplyRate
       )
     `);
 
@@ -360,6 +365,11 @@ class SQLiteStore {
       imapPort: m.imapPort ?? null,
       username: m.username || null,
       useSsl: m.useSsl !== undefined ? (m.useSsl ? 1 : 0) : 1,
+      warmupEnabled: m.warmupEnabled !== undefined ? (m.warmupEnabled ? 1 : 0) : 1,
+      warmupStartingLimit: m.warmupStartingLimit ?? 5,
+      warmupDailyIncrement: m.warmupDailyIncrement ?? 3,
+      warmupTargetLimit: m.warmupTargetLimit ?? 45,
+      warmupReplyRate: m.warmupReplyRate ?? 35,
     });
 
     return m;
@@ -376,7 +386,10 @@ class SQLiteStore {
         dailySendLimit = @dailySendLimit, sentToday = @sentToday, warmUpProgress = @warmUpProgress,
         spfValid = @spfValid, dkimValid = @dkimValid, dmarcValid = @dmarcValid, lastSyncAt = @lastSyncAt,
         smtpHost = @smtpHost, smtpPort = @smtpPort, imapHost = @imapHost, imapPort = @imapPort,
-        username = @username, useSsl = @useSsl
+        username = @username, useSsl = @useSsl,
+        warmupEnabled = @warmupEnabled, warmupStartingLimit = @warmupStartingLimit,
+        warmupDailyIncrement = @warmupDailyIncrement, warmupTargetLimit = @warmupTargetLimit,
+        warmupReplyRate = @warmupReplyRate
       WHERE id = @id
     `);
 
@@ -399,6 +412,11 @@ class SQLiteStore {
       imapPort: merged.imapPort ?? null,
       username: merged.username || null,
       useSsl: merged.useSsl ? 1 : 0,
+      warmupEnabled: merged.warmupEnabled ? 1 : 0,
+      warmupStartingLimit: merged.warmupStartingLimit ?? 5,
+      warmupDailyIncrement: merged.warmupDailyIncrement ?? 3,
+      warmupTargetLimit: merged.warmupTargetLimit ?? 45,
+      warmupReplyRate: merged.warmupReplyRate ?? 35,
     });
 
     return merged;
