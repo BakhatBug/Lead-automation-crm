@@ -104,17 +104,49 @@ export class CampaignsController {
 
     const updated = db.updateCampaign(campaign.id, { status: 'ACTIVE' });
 
+    // Filter leads by campaign.targetAudience segment tag
+    let targetLeads = db.getLeads().filter((l) => l.status !== 'UNSUBSCRIBED');
+
+    if (campaign.targetAudience && campaign.targetAudience !== 'All Leads') {
+      const tagToMatch = campaign.targetAudience.toLowerCase().trim();
+      targetLeads = targetLeads.filter((l) =>
+        (l.tags || []).some((t) => t.toLowerCase().trim() === tagToMatch)
+      );
+    }
+
+    // Execute Step 1 initial outreach email for all targeted leads
+    let enrolledCount = 0;
+    for (const lead of targetLeads) {
+      const sendResult = SequenceEngine.executeInitialSend(updated || campaign, lead);
+      if (sendResult.success) {
+        enrolledCount++;
+      }
+    }
+
+    // Update campaign enrolled leads count
+    db.updateCampaign(campaign.id, {
+      stats: {
+        ...campaign.stats,
+        leadsCount: enrolledCount || targetLeads.length,
+      },
+    });
+
     db.addAuditLog({
       id: `audit-${uuidv4().slice(0, 8)}`,
       eventType: 'CAMPAIGN_LAUNCHED',
       entityType: 'Campaign',
       entityId: campaign.id,
-      description: `Launched campaign "${campaign.name}". Sequence scheduler activated.`,
+      description: `Launched campaign "${campaign.name}" targeting "${campaign.targetAudience || 'All Leads'}". Enrolled ${enrolledCount} matching leads.`,
       actor: 'User',
       timestamp: new Date().toISOString(),
     });
 
-    res.json({ success: true, message: 'Campaign launched successfully', campaign: updated });
+    res.json({
+      success: true,
+      message: `Campaign launched successfully targeting ${enrolledCount} leads (${campaign.targetAudience || 'All Leads'}).`,
+      campaign: db.getCampaignById(campaign.id),
+      enrolledCount,
+    });
   }
 
   // POST /api/campaigns/:id/pause

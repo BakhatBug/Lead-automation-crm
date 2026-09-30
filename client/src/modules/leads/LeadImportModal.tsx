@@ -22,6 +22,7 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
   const [csvText, setCsvText] = useState(SAMPLE_CSV);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string; rowCount: number; content: string }[]>([]);
   
+  const [listTag, setListTag] = useState('Doctor Campaign List');
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<any>({});
   const [previewRows, setPreviewRows] = useState<any[]>([]);
@@ -144,9 +145,10 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
       setLoading(true);
       setError(null);
       const targetCsv = getCombinedCSV();
-      const tags = uploadedFiles.length > 0 
+      const baseTags = uploadedFiles.length > 0 
         ? uploadedFiles.map((f) => `File: ${f.name}`)
         : ['CSV Import', 'Auto-Scored'];
+      const tags = listTag.trim() ? Array.from(new Set([listTag.trim(), ...baseTags])) : baseTags;
 
       const res = await api.importCSVLeads(targetCsv, mapping, tags);
       setImportResult(res);
@@ -216,6 +218,21 @@ export const LeadImportModal: React.FC<LeadImportModalProps> = ({ isOpen, onClos
         {/* Step 1: Input / File Upload */}
         {step === 1 && (
           <div className="flex-1 overflow-y-auto space-y-4">
+            {/* Campaign / Segment List Tag Field */}
+            <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl space-y-1">
+              <label className="text-xs font-bold text-blue-900 flex items-center justify-between">
+                <span>🏷️ Campaign / Segment Tag Name *</span>
+                <span className="text-[10px] text-blue-600 font-normal">Tags all leads in this CSV for targeted outreach</span>
+              </label>
+              <input
+                type="text"
+                value={listTag}
+                onChange={(e) => setListTag(e.target.value)}
+                placeholder="e.g. Doctor Campaign List, Stationery Shop List..."
+                className="w-full rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs text-slate-900 font-medium focus:border-blue-600 focus:outline-none shadow-xs"
+              />
+            </div>
+
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div className="flex items-center gap-2">
                 <button
