@@ -122,6 +122,77 @@ export interface Mailbox {
   imapPort?: number;
   username?: string;
   useSsl?: boolean;
+  // Automated Warmup Ramp Settings
+  warmupEnabled?: boolean;
+  warmupStartingLimit?: number;
+  warmupDailyIncrement?: number;
+  warmupTargetLimit?: number;
+  warmupReplyRate?: number;
+}
+
+export interface DnsRecordDetail {
+  type: 'TXT' | 'MX' | 'CNAME';
+  host: string;
+  expectedValue: string;
+  currentValue?: string;
+  status: 'VALID' | 'WARNING' | 'INVALID';
+  description: string;
+  importance: 'CRITICAL' | 'RECOMMENDED' | 'OPTIONAL';
+}
+
+export interface DnsDiagnosticResult {
+  mailboxId: string;
+  email: string;
+  domain: string;
+  provider: MailboxProvider;
+  overallScore: number; // 0 to 100
+  overallStatus: 'READY' | 'WARNING' | 'CRITICAL';
+  records: {
+    spf: DnsRecordDetail;
+    dkim: DnsRecordDetail;
+    dmarc: DnsRecordDetail;
+    mx: DnsRecordDetail;
+    trackingDomain: DnsRecordDetail;
+  };
+  recommendations: string[];
+  lastCheckedAt: string;
+}
+
+export type DispatchStrategy = 'ROUND_ROBIN' | 'LEAST_UTILIZED' | 'WARMUP_WEIGHTED';
+
+export interface DispatchAllocation {
+  mailboxId: string;
+  mailboxName: string;
+  email: string;
+  provider: MailboxProvider;
+  allocatedCount: number;
+  startingSentToday: number;
+  endingSentToday: number;
+  dailySendLimit: number;
+  utilizationPercent: number;
+  quotaExhausted: boolean;
+  status: MailboxStatus;
+}
+
+export interface DispatchScheduleItem {
+  index: number;
+  mailboxEmail: string;
+  provider: MailboxProvider;
+  scheduledAtOffsetSec: number;
+  scheduledAtFormatted: string;
+  delayFromPreviousSec: number;
+}
+
+export interface DispatchSimulationResult {
+  totalRequested: number;
+  totalAllocated: number;
+  overflowUnallocated: number;
+  strategyUsed: DispatchStrategy;
+  estimatedDurationMinutes: number;
+  averageDelaySec: number;
+  allocations: DispatchAllocation[];
+  scheduleTimeline: DispatchScheduleItem[];
+  insights: string[];
 }
 
 export type EmailDirection = 'OUTBOUND' | 'INBOUND';

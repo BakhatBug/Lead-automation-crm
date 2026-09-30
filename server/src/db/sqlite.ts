@@ -101,7 +101,12 @@ export function initDatabaseSchema() {
       imapHost TEXT,
       imapPort INTEGER,
       username TEXT,
-      useSsl INTEGER DEFAULT 1
+      useSsl INTEGER DEFAULT 1,
+      warmupEnabled INTEGER DEFAULT 1,
+      warmupStartingLimit INTEGER DEFAULT 5,
+      warmupDailyIncrement INTEGER DEFAULT 3,
+      warmupTargetLimit INTEGER DEFAULT 45,
+      warmupReplyRate INTEGER DEFAULT 35
     );
 
     CREATE TABLE IF NOT EXISTS conversations (
@@ -224,6 +229,11 @@ export function initDatabaseSchema() {
     if (!columns.includes('imapPort')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN imapPort INTEGER');
     if (!columns.includes('username')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN username TEXT');
     if (!columns.includes('useSsl')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN useSsl INTEGER DEFAULT 1');
+    if (!columns.includes('warmupEnabled')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupEnabled INTEGER DEFAULT 1');
+    if (!columns.includes('warmupStartingLimit')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupStartingLimit INTEGER DEFAULT 5');
+    if (!columns.includes('warmupDailyIncrement')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupDailyIncrement INTEGER DEFAULT 3');
+    if (!columns.includes('warmupTargetLimit')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupTargetLimit INTEGER DEFAULT 45');
+    if (!columns.includes('warmupReplyRate')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupReplyRate INTEGER DEFAULT 35');
   } catch (e) {
     console.error('[Database Migration Error]', e);
   }

@@ -10,6 +10,9 @@ import {
   FunnelMetrics,
   AttributionRecord,
   AuditLog,
+  DnsDiagnosticResult,
+  DispatchSimulationResult,
+  DispatchAllocation,
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -188,6 +191,53 @@ export const api = {
         recommendations: string[];
       };
     }>(`/mailboxes/${id}/health`);
+  },
+
+  getMailboxDnsDiagnostics: async (id: string, forceFix?: boolean) => {
+    return fetchJSON<{
+      success: boolean;
+      result: DnsDiagnosticResult;
+    }>(`/mailboxes/${id}/dns${forceFix ? '?fix=true' : ''}`);
+  },
+
+  updateMailbox: async (id: string, updates: Partial<Mailbox>) => {
+    const res = await fetchJSON<{ success: boolean; mailbox: Mailbox }>(`/mailboxes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+    return res.mailbox;
+  },
+
+  simulateMailboxDispatch: async (data: {
+    batchSize: number;
+    strategy?: string;
+    selectedMailboxIds?: string[];
+    minDelaySec?: number;
+    maxDelaySec?: number;
+  }) => {
+    return fetchJSON<{
+      success: boolean;
+      result: DispatchSimulationResult;
+    }>('/mailboxes/dispatch-pool/simulate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  executeMailboxDispatch: async (data: {
+    batchSize: number;
+    strategy?: string;
+    selectedMailboxIds?: string[];
+  }) => {
+    return fetchJSON<{
+      success: boolean;
+      dispatchedCount: number;
+      message: string;
+      allocations: DispatchAllocation[];
+    }>('/mailboxes/dispatch-pool/execute', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   connectMailbox: async (data: {

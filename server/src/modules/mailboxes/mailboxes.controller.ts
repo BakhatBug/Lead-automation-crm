@@ -27,6 +27,17 @@ export class MailboxesController {
     res.json({ success: true, diagnostics });
   }
 
+  // GET /api/mailboxes/:id/dns
+  static async getDnsDiagnostics(req: Request, res: Response) {
+    try {
+      const forceFix = req.query.fix === 'true';
+      const result = await MailboxesService.diagnoseMailboxDns(req.params.id as string, forceFix);
+      res.json({ success: true, result });
+    } catch (err: any) {
+      res.status(err.message.includes('not found') ? 404 : 500).json({ success: false, error: err.message });
+    }
+  }
+
   // POST /api/mailboxes/test-connection
   static async testMailboxConnection(req: Request, res: Response) {
     try {
@@ -164,6 +175,52 @@ export class MailboxesController {
       });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // PATCH /api/mailboxes/:id
+  static updateMailbox(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updated = db.updateMailbox(id as string, req.body);
+      if (!updated) {
+        return res.status(404).json({ success: false, error: 'Mailbox not found' });
+      }
+      res.json({ success: true, mailbox: updated });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/mailboxes/dispatch-pool/simulate
+  static simulateDispatchPool(req: Request, res: Response) {
+    try {
+      const { batchSize, strategy, selectedMailboxIds, minDelaySec, maxDelaySec } = req.body;
+      const result = MailboxesService.simulateDispatchPool({
+        batchSize: Number(batchSize) || 50,
+        strategy,
+        selectedMailboxIds,
+        minDelaySec: minDelaySec ? Number(minDelaySec) : undefined,
+        maxDelaySec: maxDelaySec ? Number(maxDelaySec) : undefined,
+      });
+      res.json({ success: true, result });
+    } catch (err: any) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/mailboxes/dispatch-pool/execute
+  static executeDispatchBatch(req: Request, res: Response) {
+    try {
+      const { batchSize, strategy, selectedMailboxIds } = req.body;
+      const result = MailboxesService.executeDispatchBatch({
+        batchSize: Number(batchSize) || 50,
+        strategy,
+        selectedMailboxIds,
+      });
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ success: false, error: err.message });
     }
   }
 }
