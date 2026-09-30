@@ -19,10 +19,27 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [objective, setObjective] = useState('');
-  const [targetAudience, setTargetAudience] = useState('');
+  const [targetAudience, setTargetAudience] = useState('Doctor Campaign List');
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedMailboxes, setSelectedMailboxes] = useState<string[]>(
     mailboxes.length > 0 ? [mailboxes[0].id] : []
   );
+
+  React.useEffect(() => {
+    if (isOpen) {
+      api.getLeads().then((leads) => {
+        const tagSet = new Set<string>();
+        leads.forEach((l) => {
+          (l.tags || []).forEach((t) => tagSet.add(t));
+        });
+        const tags = Array.from(tagSet);
+        setAvailableTags(tags);
+        if (tags.length > 0 && !targetAudience) {
+          setTargetAudience(tags[0]);
+        }
+      }).catch(console.error);
+    }
+  }, [isOpen]);
   const [steps, setSteps] = useState<SequenceStep[]>([
     {
       id: 'step-1',
@@ -137,14 +154,32 @@ export const CampaignWizardModal: React.FC<CampaignWizardModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Target ICP Segment</label>
-              <input
-                type="text"
-                value={targetAudience}
-                onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. Series A-C SaaS, VP Sales, 50-300 reps"
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
-              />
+              <label className="text-xs font-bold text-slate-700 flex justify-between">
+                <span>Target Lead Segment / List Tag *</span>
+                <span className="text-[10px] text-blue-600 font-normal">Enrolls only leads matching this list tag</span>
+              </label>
+              {availableTags.length > 0 ? (
+                <select
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-blue-700 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
+                >
+                  <option value="All Leads">All Leads (Entire Database)</option>
+                  {availableTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      Tag Segment: {tag}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={targetAudience}
+                  onChange={(e) => setTargetAudience(e.target.value)}
+                  placeholder="e.g. Doctor Campaign List, Stationery Shop List..."
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none shadow-sm"
+                />
+              )}
             </div>
 
             <div className="md:col-span-2 space-y-1.5">
