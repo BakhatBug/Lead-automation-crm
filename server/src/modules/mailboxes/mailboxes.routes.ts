@@ -15,5 +15,6 @@ router.post('/dispatch-pool/execute', MailboxesController.executeDispatchBatch);
 router.post('/webhook/simulate-reply', MailboxesController.simulateIncomingReply);
 router.post('/:id/bounce', MailboxesController.recordBounce);
 router.post('/:id/quarantine/reset', MailboxesController.resetQuarantine);
+router.post('/:id/blacklists/scan', MailboxesController.scanBlacklists);
 
 export default router;

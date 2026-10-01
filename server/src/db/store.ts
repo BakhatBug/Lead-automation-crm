@@ -335,6 +335,8 @@ class SQLiteStore {
       quarantineThreshold: r.quarantineThreshold !== null && r.quarantineThreshold !== undefined ? Number(r.quarantineThreshold) : 3.0,
       isQuarantined: r.isQuarantined !== null && r.isQuarantined !== undefined ? Boolean(r.isQuarantined) : false,
       quarantineReason: r.quarantineReason || undefined,
+      blacklistStatus: r.blacklistStatus || 'CLEAN',
+      lastBlacklistScanAt: r.lastBlacklistScanAt || undefined,
     };
   }
 
@@ -344,12 +346,14 @@ class SQLiteStore {
         id, provider, email, name, status, dailySendLimit, sentToday, warmUpProgress, spfValid, dkimValid, dmarcValid, lastSyncAt,
         smtpHost, smtpPort, imapHost, imapPort, username, useSsl,
         warmupEnabled, warmupStartingLimit, warmupDailyIncrement, warmupTargetLimit, warmupReplyRate,
-        bounceCount, bounceRate, quarantineThreshold, isQuarantined, quarantineReason
+        bounceCount, bounceRate, quarantineThreshold, isQuarantined, quarantineReason,
+        blacklistStatus, lastBlacklistScanAt
       ) VALUES (
         @id, @provider, @email, @name, @status, @dailySendLimit, @sentToday, @warmUpProgress, @spfValid, @dkimValid, @dmarcValid, @lastSyncAt,
         @smtpHost, @smtpPort, @imapHost, @imapPort, @username, @useSsl,
         @warmupEnabled, @warmupStartingLimit, @warmupDailyIncrement, @warmupTargetLimit, @warmupReplyRate,
-        @bounceCount, @bounceRate, @quarantineThreshold, @isQuarantined, @quarantineReason
+        @bounceCount, @bounceRate, @quarantineThreshold, @isQuarantined, @quarantineReason,
+        @blacklistStatus, @lastBlacklistScanAt
       )
     `);
 
@@ -382,6 +386,8 @@ class SQLiteStore {
       quarantineThreshold: m.quarantineThreshold ?? 3.0,
       isQuarantined: m.isQuarantined ? 1 : 0,
       quarantineReason: m.quarantineReason || null,
+      blacklistStatus: m.blacklistStatus || 'CLEAN',
+      lastBlacklistScanAt: m.lastBlacklistScanAt || null,
     });
 
     return m;
@@ -404,7 +410,8 @@ class SQLiteStore {
         warmupReplyRate = @warmupReplyRate,
         bounceCount = @bounceCount, bounceRate = @bounceRate,
         quarantineThreshold = @quarantineThreshold, isQuarantined = @isQuarantined,
-        quarantineReason = @quarantineReason
+        quarantineReason = @quarantineReason,
+        blacklistStatus = @blacklistStatus, lastBlacklistScanAt = @lastBlacklistScanAt
       WHERE id = @id
     `);
 
@@ -437,6 +444,8 @@ class SQLiteStore {
       quarantineThreshold: merged.quarantineThreshold ?? 3.0,
       isQuarantined: merged.isQuarantined ? 1 : 0,
       quarantineReason: merged.quarantineReason || null,
+      blacklistStatus: merged.blacklistStatus || 'CLEAN',
+      lastBlacklistScanAt: merged.lastBlacklistScanAt || null,
     });
 
     return merged;

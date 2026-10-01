@@ -111,7 +111,9 @@ export function initDatabaseSchema() {
       bounceRate REAL DEFAULT 0.0,
       quarantineThreshold REAL DEFAULT 3.0,
       isQuarantined INTEGER DEFAULT 0,
-      quarantineReason TEXT
+      quarantineReason TEXT,
+      blacklistStatus TEXT DEFAULT 'CLEAN',
+      lastBlacklistScanAt TEXT
     );
 
     CREATE TABLE IF NOT EXISTS conversations (
@@ -244,6 +246,8 @@ export function initDatabaseSchema() {
     if (!columns.includes('quarantineThreshold')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN quarantineThreshold REAL DEFAULT 3.0');
     if (!columns.includes('isQuarantined')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN isQuarantined INTEGER DEFAULT 0');
     if (!columns.includes('quarantineReason')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN quarantineReason TEXT');
+    if (!columns.includes('blacklistStatus')) sqliteDb.exec("ALTER TABLE mailboxes ADD COLUMN blacklistStatus TEXT DEFAULT 'CLEAN'");
+    if (!columns.includes('lastBlacklistScanAt')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN lastBlacklistScanAt TEXT');
   } catch (e) {
     console.error('[Database Migration Error]', e);
   }

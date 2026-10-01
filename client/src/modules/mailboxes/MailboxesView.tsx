@@ -7,6 +7,7 @@ import { DnsInspectorModal } from './DnsInspectorModal.js';
 import { WarmUpSettingsModal } from './WarmUpSettingsModal.js';
 import { DispatchSimulatorModal } from './DispatchSimulatorModal.js';
 import { BounceGuardModal } from './BounceGuardModal.js';
+import { BlacklistMonitorModal } from './BlacklistMonitorModal.js';
 import {
   MailCheck,
   Plus,
@@ -17,6 +18,7 @@ import {
   Flame,
   Shuffle,
   Lock,
+  Globe,
 } from 'lucide-react';
 
 export const MailboxesView: React.FC = () => {
@@ -31,6 +33,8 @@ export const MailboxesView: React.FC = () => {
   const [isDispatchSimulatorOpen, setIsDispatchSimulatorOpen] = useState(false);
   const [selectedBounceMailbox, setSelectedBounceMailbox] = useState<Mailbox | null>(null);
   const [isBounceGuardOpen, setIsBounceGuardOpen] = useState(false);
+  const [selectedBlacklistMailbox, setSelectedBlacklistMailbox] = useState<Mailbox | null>(null);
+  const [isBlacklistOpen, setIsBlacklistOpen] = useState(false);
 
   useEffect(() => {
     loadMailboxes();
@@ -88,6 +92,17 @@ export const MailboxesView: React.FC = () => {
           >
             <ShieldAlert className="h-4 w-4 text-rose-600" />
             Bounce Guard & Kill-Switch
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedBlacklistMailbox(mailboxes[0] || null);
+              setIsBlacklistOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-all shadow-sm"
+          >
+            <Globe className="h-4 w-4 text-emerald-600" />
+            DNSBL Blacklist Monitor
           </button>
 
           <button
@@ -353,6 +368,34 @@ export const MailboxesView: React.FC = () => {
                 </div>
               </div>
 
+              {/* DNSBL Blacklist Reputation Status */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                <span className="text-slate-600 font-semibold flex items-center gap-1">
+                  <Globe className="h-3.5 w-3.5 text-slate-500" />
+                  DNSBL Blacklist Monitor
+                </span>
+                <button
+                  onClick={() => {
+                    setSelectedBlacklistMailbox(box);
+                    setIsBlacklistOpen(true);
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                    box.blacklistStatus === 'BLACKLISTED'
+                      ? 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse'
+                      : box.blacklistStatus === 'WARNING'
+                      ? 'bg-amber-100 text-amber-800 border-amber-300'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                  title="Click to inspect real-time DNSBL blacklist listings and delisting guidance"
+                >
+                  {box.blacklistStatus === 'BLACKLISTED'
+                    ? '🚨 Blacklisted (Delist Req)'
+                    : box.blacklistStatus === 'WARNING'
+                    ? '⚠️ Warning'
+                    : '✅ Clean (0 Listed)'}
+                </button>
+              </div>
+
               {/* Dedicated Card Action Buttons */}
               <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100">
                 <button
@@ -442,6 +485,13 @@ export const MailboxesView: React.FC = () => {
         onClose={() => setIsBounceGuardOpen(false)}
         mailbox={selectedBounceMailbox}
         onSuccess={loadMailboxes}
+      />
+
+      <BlacklistMonitorModal
+        isOpen={isBlacklistOpen}
+        onClose={() => setIsBlacklistOpen(false)}
+        mailbox={selectedBlacklistMailbox}
+        onUpdated={loadMailboxes}
       />
     </div>
   );
