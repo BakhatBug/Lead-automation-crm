@@ -11,6 +11,8 @@ import {
   DispatchAllocation,
   DispatchScheduleItem,
   DispatchSimulationResult,
+  BlacklistCheckItem,
+  BlacklistScanResult,
 } from '../../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -62,9 +64,15 @@ export class MailboxesService {
       recommendations.push('Review recipient list hygiene, remove invalid contacts, and reset quarantine to resume sending.');
     }
 
+    if (mailbox.blacklistStatus === 'BLACKLISTED') {
+      healthScore -= 40;
+      issues.push('🚨 Active DNSBL Blacklist Listing: Domain or sending IP is listed on global anti-spam blocklists.');
+      recommendations.push('Inspect Blacklist Monitor, request immediate delisting from Spamhaus/Barracuda, and pause high-volume blasts.');
+    }
+
     let status: Mailbox['status'] = 'HEALTHY';
     if (healthScore < 30) status = 'DISCONNECTED';
-    else if (healthScore < 85 || mailbox.isQuarantined) status = 'WARNING';
+    else if (healthScore < 85 || mailbox.isQuarantined || mailbox.blacklistStatus === 'BLACKLISTED') status = 'WARNING';
 
     return {
       status,
@@ -768,6 +776,194 @@ export class MailboxesService {
     return {
       mailbox: updatedMailbox!,
       message: `Mailbox ${mailbox.email} quarantine reset successfully and returned to active sending rotation.`,
+    };
+  }
+
+  // Real-Time DNSBL & Domain Blacklist Monitor
+  static async scanMailboxBlacklists(
+    mailboxId: string,
+    simulateListing: boolean = false
+  ): Promise<BlacklistScanResult> {
+    const mailbox = db.getMailboxById(mailboxId);
+    if (!mailbox) {
+      throw new Error(`Mailbox with ID ${mailboxId} not found`);
+    }
+
+    const domain = mailbox.email.split('@')[1] || 'domain.com';
+    let ipAddress = '185.120.34.12';
+
+    try {
+      const aRecords = await dns.promises.resolve4(domain).catch(() => [] as string[]);
+      if (aRecords && aRecords.length > 0) {
+        ipAddress = aRecords[0];
+      }
+    } catch {
+      // Fallback IP
+    }
+
+    const reversedIp = ipAddress.split('.').reverse().join('.');
+
+    interface DnsblConfig {
+      name: string;
+      zone: string;
+      type: 'DOMAIN' | 'IP';
+      description: string;
+      severity: 'CRITICAL' | 'WARNING';
+      delistUrl: string;
+    }
+
+    const providers: DnsblConfig[] = [
+      {
+        name: 'Spamhaus ZEN (SBL + XBL + PBL)',
+        zone: 'zen.spamhaus.org',
+        type: 'IP',
+        description: 'Gold standard composite blocklist combining verified spam sources, exploits, and dynamic end-user IPs.',
+        severity: 'CRITICAL',
+        delistUrl: 'https://check.spamhaus.org/',
+      },
+      {
+        name: 'Spamhaus DBL (Domain Blocklist)',
+        zone: 'dbl.spamhaus.org',
+        type: 'DOMAIN',
+        description: 'Real-time database of domains found in unsolicited bulk emails and phishing campaigns.',
+        severity: 'CRITICAL',
+        delistUrl: 'https://check.spamhaus.org/',
+      },
+      {
+        name: 'Barracuda Reputation Network (BRBL)',
+        zone: 'b.barracudacentral.org',
+        type: 'IP',
+        description: 'Global threat intelligence network protecting enterprise email gateways from high-volume spam.',
+        severity: 'CRITICAL',
+        delistUrl: 'https://www.barracudacentral.org/rbl/removal-request',
+      },
+      {
+        name: 'SpamCop Blocking List (SCBL)',
+        zone: 'bl.spamcop.net',
+        type: 'IP',
+        description: 'Automated listing of IP addresses that have sent emails reported by SpamCop users.',
+        severity: 'WARNING',
+        delistUrl: 'https://www.spamcop.net/bl.shtml',
+      },
+      {
+        name: 'SORBS (Spam & Open Relay System)',
+        zone: 'dnsbl.sorbs.net',
+        type: 'IP',
+        description: 'Comprehensive aggregator of open proxy servers, spam senders, and compromised relays.',
+        severity: 'WARNING',
+        delistUrl: 'http://www.sorbs.net/lookup.shtml',
+      },
+      {
+        name: 'SURBL Multi URI List',
+        zone: 'multi.surbl.org',
+        type: 'DOMAIN',
+        description: 'Detects domains appearing in unsolicited bulk emails and malware payloads.',
+        severity: 'CRITICAL',
+        delistUrl: 'http://www.surbl.org/surbl-analysis',
+      },
+      {
+        name: 'GBUdb Truncate Real-Time Network',
+        zone: 'truncate.gbudb.net',
+        type: 'IP',
+        description: 'Statistical IP reputation network tracking anomalous outbound burst activity.',
+        severity: 'WARNING',
+        delistUrl: 'https://www.gbudb.com/truncate/',
+      },
+      {
+        name: 'Backscatterer / UCEPROTECT L1',
+        zone: 'ips.backscatterer.org',
+        type: 'IP',
+        description: 'Monitors servers misconfigured to send misdirected bounce notifications and backscatter spam.',
+        severity: 'WARNING',
+        delistUrl: 'https://www.backscatterer.org/?target=test',
+      },
+    ];
+
+    const checks: BlacklistCheckItem[] = [];
+
+    for (const p of providers) {
+      const lookupHost = p.type === 'IP' ? `${reversedIp}.${p.zone}` : `${domain}.${p.zone}`;
+      let isListed = false;
+      let listedCode: string | undefined;
+
+      try {
+        if (simulateListing && (p.name.includes('SpamCop') || p.name.includes('SORBS'))) {
+          isListed = true;
+          listedCode = '127.0.0.2 (Active Spam Listing)';
+        } else {
+          const addresses = await dns.promises.resolve4(lookupHost).catch(() => [] as string[]);
+          if (addresses && addresses.length > 0) {
+            isListed = addresses.some((a) => a.startsWith('127.0.0.'));
+            if (isListed) {
+              listedCode = addresses.join(', ');
+            }
+          }
+        }
+      } catch {
+        isListed = false;
+      }
+
+      checks.push({
+        providerName: p.name,
+        host: lookupHost,
+        type: p.type,
+        isListed,
+        listedCode,
+        description: p.description,
+        severity: p.severity,
+        delistUrl: p.delistUrl,
+        checkedAt: new Date().toISOString(),
+      });
+    }
+
+    const listedChecks = checks.filter((c) => c.isListed);
+    const listedCount = listedChecks.length;
+    const hasCritical = listedChecks.some((c) => c.severity === 'CRITICAL');
+
+    let overallStatus: 'CLEAN' | 'WARNING' | 'BLACKLISTED' = 'CLEAN';
+    let reputationScore = 100;
+
+    for (const item of listedChecks) {
+      if (item.severity === 'CRITICAL') reputationScore -= 30;
+      else reputationScore -= 15;
+    }
+    reputationScore = Math.max(0, reputationScore);
+
+    if (hasCritical || listedCount >= 2) {
+      overallStatus = 'BLACKLISTED';
+    } else if (listedCount > 0) {
+      overallStatus = 'WARNING';
+    }
+
+    // Persist scan result to Mailbox in SQLite
+    db.updateMailbox(mailboxId, {
+      blacklistStatus: overallStatus,
+      lastBlacklistScanAt: new Date().toISOString(),
+      status: overallStatus === 'BLACKLISTED' ? 'WARNING' : mailbox.status,
+    });
+
+    if (overallStatus === 'BLACKLISTED') {
+      db.addAuditLog({
+        id: `audit-${uuidv4().slice(0, 8)}`,
+        eventType: 'DOMAIN_BLACKLIST_DETECTED',
+        entityType: 'Mailbox',
+        entityId: mailbox.id,
+        description: `🚨 DNSBL BLACKLIST HIT: Mailbox ${mailbox.email} is listed on ${listedCount} blacklist(s)! Outbound deliverability compromised.`,
+        actor: 'Blacklist Monitor',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return {
+      mailboxId: mailbox.id,
+      domain,
+      ipAddress,
+      overallStatus,
+      reputationScore,
+      totalChecked: providers.length,
+      listedCount,
+      checks,
+      scannedAt: new Date().toISOString(),
     };
   }
 }

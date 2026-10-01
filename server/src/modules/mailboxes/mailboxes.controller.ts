@@ -250,4 +250,16 @@ export class MailboxesController {
       res.status(err.message.includes('not found') ? 404 : 400).json({ success: false, error: err.message });
     }
   }
+
+  // POST /api/mailboxes/:id/blacklists/scan
+  static async scanBlacklists(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { simulateListing } = req.body;
+      const result = await MailboxesService.scanMailboxBlacklists(id as string, Boolean(simulateListing));
+      res.json({ success: true, result });
+    } catch (err: any) {
+      res.status(err.message.includes('not found') ? 404 : 500).json({ success: false, error: err.message });
+    }
+  }
 }

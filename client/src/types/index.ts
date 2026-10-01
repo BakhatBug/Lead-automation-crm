@@ -122,6 +122,33 @@ export interface Mailbox {
   quarantineThreshold?: number; // percentage, e.g. 3.0 (%)
   isQuarantined?: boolean;
   quarantineReason?: string;
+  // Real-Time DNSBL & Domain Blacklist Reputation
+  blacklistStatus?: 'CLEAN' | 'WARNING' | 'BLACKLISTED';
+  lastBlacklistScanAt?: string;
+}
+
+export interface BlacklistCheckItem {
+  providerName: string;
+  host: string;
+  type: 'DOMAIN' | 'IP';
+  isListed: boolean;
+  listedCode?: string;
+  description: string;
+  severity: 'CRITICAL' | 'WARNING' | 'INFO';
+  delistUrl?: string;
+  checkedAt: string;
+}
+
+export interface BlacklistScanResult {
+  mailboxId: string;
+  domain: string;
+  ipAddress?: string;
+  overallStatus: 'CLEAN' | 'WARNING' | 'BLACKLISTED';
+  reputationScore: number; // 0 - 100
+  totalChecked: number;
+  listedCount: number;
+  checks: BlacklistCheckItem[];
+  scannedAt: string;
 }
 
 export interface DnsRecordDetail {

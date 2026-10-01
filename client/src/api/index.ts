@@ -13,6 +13,7 @@ import {
   DnsDiagnosticResult,
   DispatchSimulationResult,
   DispatchAllocation,
+  BlacklistScanResult,
 } from '../types/index.js';
 
 const API_BASE = '/api';
@@ -266,6 +267,16 @@ export const api = {
       message: string;
     }>(`/mailboxes/${id}/quarantine/reset`, {
       method: 'POST',
+    });
+  },
+
+  scanMailboxBlacklists: async (id: string, simulateListing?: boolean) => {
+    return fetchJSON<{
+      success: boolean;
+      result: BlacklistScanResult;
+    }>(`/mailboxes/${id}/blacklists/scan`, {
+      method: 'POST',
+      body: JSON.stringify({ simulateListing }),
     });
   },
 
