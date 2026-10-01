@@ -56,9 +56,15 @@ export class MailboxesService {
       recommendations.push('Sends paused until midnight UTC to protect sender reputation.');
     }
 
+    if (mailbox.isQuarantined) {
+      healthScore -= 50;
+      issues.push(`🚨 Domain Quarantine Active: Bounce rate (${mailbox.bounceRate || 0}%) breached safety threshold (${mailbox.quarantineThreshold || 3}%)`);
+      recommendations.push('Review recipient list hygiene, remove invalid contacts, and reset quarantine to resume sending.');
+    }
+
     let status: Mailbox['status'] = 'HEALTHY';
-    if (healthScore < 50) status = 'DISCONNECTED';
-    else if (healthScore < 85) status = 'WARNING';
+    if (healthScore < 30) status = 'DISCONNECTED';
+    else if (healthScore < 85 || mailbox.isQuarantined) status = 'WARNING';
 
     return {
       status,
@@ -428,9 +434,13 @@ export class MailboxesService {
       allMailboxes = allMailboxes.filter((m) => selectedMailboxIds.includes(m.id));
     }
 
-    // Filter only healthy or connected mailboxes
-    const activePool = allMailboxes.filter((m) => m.status !== 'DISCONNECTED');
+    // Filter only healthy or connected mailboxes, excluding any quarantined mailboxes
+    const quarantinedBoxes = allMailboxes.filter((m) => m.isQuarantined);
+    const activePool = allMailboxes.filter((m) => m.status !== 'DISCONNECTED' && !m.isQuarantined);
     if (activePool.length === 0) {
+      if (quarantinedBoxes.length > 0) {
+        throw new Error('All candidate mailboxes are currently QUARANTINED due to excessive bounce rates. Reset quarantine to resume dispatch.');
+      }
       throw new Error('No active or connected mailboxes available in the sending pool.');
     }
 
@@ -563,6 +573,12 @@ export class MailboxesService {
       );
     }
 
+    if (quarantinedBoxes.length > 0) {
+      insights.push(
+        `🚨 Automated Domain Quarantine Active: ${quarantinedBoxes.map((b) => b.email).join(', ')} quarantined due to bounce rate breach (>= 3.0%). Excluded from dispatch pool.`
+      );
+    }
+
     insights.push(
       `⏱️ Human Pacing Simulation: Enforcing randomized delay jitter (${minDelaySec}s–${maxDelaySec}s) across business hours to bypass burst-detection heuristics.`
     );
@@ -612,6 +628,146 @@ export class MailboxesService {
       dispatchedCount: simulation.totalAllocated,
       message: `Successfully executed batch dispatch of ${simulation.totalAllocated} emails across mailbox pool.`,
       allocations: simulation.allocations,
+    };
+  }
+
+  // Record Mailbox Bounce & Trigger Automated Quarantine Kill-Switch if breached
+  static recordBounce(
+    mailboxId: string,
+    params: {
+      bouncedEmail?: string;
+      rfcCode?: string;
+      reason?: string;
+    }
+  ): {
+    mailbox: Mailbox;
+    isQuarantined: boolean;
+    bounceRate: number;
+    quarantineTriggered: boolean;
+    suppressionAdded: boolean;
+    leadUpdated: boolean;
+    message: string;
+  } {
+    const mailbox = db.getMailboxById(mailboxId);
+    if (!mailbox) {
+      throw new Error(`Mailbox with ID ${mailboxId} not found`);
+    }
+
+    const currentBounceCount = (mailbox.bounceCount || 0) + 1;
+    // Calculate bounce rate: (bounces / max(sentToday, bounces)) * 100
+    const totalAttempts = Math.max(mailbox.sentToday || 0, currentBounceCount);
+    const bounceRate = Number(((currentBounceCount / totalAttempts) * 100).toFixed(1));
+
+    const threshold = mailbox.quarantineThreshold ?? 3.0;
+    const shouldQuarantine = bounceRate >= threshold;
+    const wasAlreadyQuarantined = Boolean(mailbox.isQuarantined);
+    const quarantineTriggered = shouldQuarantine && !wasAlreadyQuarantined;
+
+    const quarantineReason = shouldQuarantine
+      ? `Bounce rate (${bounceRate}%) reached/exceeded safety threshold (${threshold}%). RFC: ${params.rfcCode || '550'} - ${params.reason || 'Permanent delivery failure'}. Outbound dispatch halted to safeguard domain reputation.`
+      : mailbox.quarantineReason;
+
+    const updatedMailbox = db.updateMailbox(mailboxId, {
+      bounceCount: currentBounceCount,
+      bounceRate,
+      isQuarantined: shouldQuarantine,
+      quarantineReason: shouldQuarantine ? quarantineReason : mailbox.quarantineReason,
+      status: shouldQuarantine ? 'WARNING' : mailbox.status,
+    });
+
+    let suppressionAdded = false;
+    if (params.bouncedEmail && params.bouncedEmail.trim()) {
+      const cleanEmail = params.bouncedEmail.trim().toLowerCase();
+      if (!db.isSuppressed(cleanEmail)) {
+        db.addSuppression({
+          id: `supp-${uuidv4().slice(0, 8)}`,
+          email: cleanEmail,
+          reason: 'BOUNCE',
+          source: `Automated Bounce Guard (${params.rfcCode || '550'}: ${params.reason || 'User Unknown'}) via ${mailbox.email}`,
+          createdAt: new Date().toISOString(),
+        });
+        suppressionAdded = true;
+      }
+    }
+
+    let leadUpdated = false;
+    if (params.bouncedEmail && params.bouncedEmail.trim()) {
+      const cleanEmail = params.bouncedEmail.trim().toLowerCase();
+      const leads = db.getLeads();
+      const matchedLead = leads.find((l) => l.email && l.email.toLowerCase() === cleanEmail);
+      if (matchedLead) {
+        db.updateLead(matchedLead.id, {
+          status: 'BOUNCED',
+          notes: `${matchedLead.notes ? matchedLead.notes + '\n' : ''}[Bounce Guard] Hard bounce recorded (${params.rfcCode || '550'} - ${params.reason || 'User Unknown'}). Email suppressed globally.`,
+        });
+        leadUpdated = true;
+      }
+    }
+
+    // Audit logging
+    if (quarantineTriggered) {
+      db.addAuditLog({
+        id: `audit-${uuidv4().slice(0, 8)}`,
+        eventType: 'MAILBOX_QUARANTINED',
+        entityType: 'Mailbox',
+        entityId: mailbox.id,
+        description: `🚨 KILL-SWITCH TRIGGERED: Mailbox ${mailbox.email} quarantined! Bounce rate hit ${bounceRate}% (threshold: ${threshold}%). Outbound sends halted immediately.`,
+        actor: 'Bounce Guard Engine',
+        timestamp: new Date().toISOString(),
+      });
+    } else {
+      db.addAuditLog({
+        id: `audit-${uuidv4().slice(0, 8)}`,
+        eventType: 'EMAIL_BOUNCE_RECORDED',
+        entityType: 'Mailbox',
+        entityId: mailbox.id,
+        description: `Recorded bounce for ${params.bouncedEmail || 'unknown'} via ${mailbox.email} (${params.rfcCode || '550'}). Current bounce rate: ${bounceRate}%.`,
+        actor: 'Bounce Guard Engine',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return {
+      mailbox: updatedMailbox!,
+      isQuarantined: shouldQuarantine,
+      bounceRate,
+      quarantineTriggered,
+      suppressionAdded,
+      leadUpdated,
+      message: shouldQuarantine
+        ? `⚠️ Quarantine Kill-Switch Triggered: Mailbox ${mailbox.email} has been automatically quarantined at ${bounceRate}% bounce rate.`
+        : `Bounce recorded. Current bounce rate: ${bounceRate}% (under ${threshold}% threshold).`,
+    };
+  }
+
+  // Reset Mailbox Quarantine & Reactivate into Pool
+  static resetQuarantine(mailboxId: string): { mailbox: Mailbox; message: string } {
+    const mailbox = db.getMailboxById(mailboxId);
+    if (!mailbox) {
+      throw new Error(`Mailbox with ID ${mailboxId} not found`);
+    }
+
+    const updatedMailbox = db.updateMailbox(mailboxId, {
+      isQuarantined: false,
+      bounceCount: 0,
+      bounceRate: 0,
+      quarantineReason: undefined,
+      status: mailbox.spfValid && mailbox.dkimValid ? 'HEALTHY' : 'WARNING',
+    });
+
+    db.addAuditLog({
+      id: `audit-${uuidv4().slice(0, 8)}`,
+      eventType: 'MAILBOX_REACTIVATED',
+      entityType: 'Mailbox',
+      entityId: mailbox.id,
+      description: `🛡️ Quarantine reset for ${mailbox.email}. Bounces cleared and mailbox reactivated into sending pool.`,
+      actor: 'Deliverability Operator',
+      timestamp: new Date().toISOString(),
+    });
+
+    return {
+      mailbox: updatedMailbox!,
+      message: `Mailbox ${mailbox.email} quarantine reset successfully and returned to active sending rotation.`,
     };
   }
 }

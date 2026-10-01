@@ -13,5 +13,7 @@ router.post('/test-connection', MailboxesController.testMailboxConnection);
 router.post('/dispatch-pool/simulate', MailboxesController.simulateDispatchPool);
 router.post('/dispatch-pool/execute', MailboxesController.executeDispatchBatch);
 router.post('/webhook/simulate-reply', MailboxesController.simulateIncomingReply);
+router.post('/:id/bounce', MailboxesController.recordBounce);
+router.post('/:id/quarantine/reset', MailboxesController.resetQuarantine);
 
 export default router;

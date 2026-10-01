@@ -128,6 +128,12 @@ export interface Mailbox {
   warmupDailyIncrement?: number;
   warmupTargetLimit?: number;
   warmupReplyRate?: number;
+  // Bounce Tracking & Domain Quarantine Safeguard
+  bounceCount?: number;
+  bounceRate?: number;
+  quarantineThreshold?: number; // percentage, e.g. 3.0 (%)
+  isQuarantined?: boolean;
+  quarantineReason?: string;
 }
 
 export interface DnsRecordDetail {

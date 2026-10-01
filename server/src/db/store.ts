@@ -330,6 +330,11 @@ class SQLiteStore {
       warmupDailyIncrement: r.warmupDailyIncrement ?? 3,
       warmupTargetLimit: r.warmupTargetLimit ?? 45,
       warmupReplyRate: r.warmupReplyRate ?? 35,
+      bounceCount: r.bounceCount ?? 0,
+      bounceRate: r.bounceRate !== null && r.bounceRate !== undefined ? Number(r.bounceRate) : 0.0,
+      quarantineThreshold: r.quarantineThreshold !== null && r.quarantineThreshold !== undefined ? Number(r.quarantineThreshold) : 3.0,
+      isQuarantined: r.isQuarantined !== null && r.isQuarantined !== undefined ? Boolean(r.isQuarantined) : false,
+      quarantineReason: r.quarantineReason || undefined,
     };
   }
 
@@ -338,11 +343,13 @@ class SQLiteStore {
       INSERT INTO mailboxes (
         id, provider, email, name, status, dailySendLimit, sentToday, warmUpProgress, spfValid, dkimValid, dmarcValid, lastSyncAt,
         smtpHost, smtpPort, imapHost, imapPort, username, useSsl,
-        warmupEnabled, warmupStartingLimit, warmupDailyIncrement, warmupTargetLimit, warmupReplyRate
+        warmupEnabled, warmupStartingLimit, warmupDailyIncrement, warmupTargetLimit, warmupReplyRate,
+        bounceCount, bounceRate, quarantineThreshold, isQuarantined, quarantineReason
       ) VALUES (
         @id, @provider, @email, @name, @status, @dailySendLimit, @sentToday, @warmUpProgress, @spfValid, @dkimValid, @dmarcValid, @lastSyncAt,
         @smtpHost, @smtpPort, @imapHost, @imapPort, @username, @useSsl,
-        @warmupEnabled, @warmupStartingLimit, @warmupDailyIncrement, @warmupTargetLimit, @warmupReplyRate
+        @warmupEnabled, @warmupStartingLimit, @warmupDailyIncrement, @warmupTargetLimit, @warmupReplyRate,
+        @bounceCount, @bounceRate, @quarantineThreshold, @isQuarantined, @quarantineReason
       )
     `);
 
@@ -370,6 +377,11 @@ class SQLiteStore {
       warmupDailyIncrement: m.warmupDailyIncrement ?? 3,
       warmupTargetLimit: m.warmupTargetLimit ?? 45,
       warmupReplyRate: m.warmupReplyRate ?? 35,
+      bounceCount: m.bounceCount ?? 0,
+      bounceRate: m.bounceRate ?? 0.0,
+      quarantineThreshold: m.quarantineThreshold ?? 3.0,
+      isQuarantined: m.isQuarantined ? 1 : 0,
+      quarantineReason: m.quarantineReason || null,
     });
 
     return m;
@@ -389,7 +401,10 @@ class SQLiteStore {
         username = @username, useSsl = @useSsl,
         warmupEnabled = @warmupEnabled, warmupStartingLimit = @warmupStartingLimit,
         warmupDailyIncrement = @warmupDailyIncrement, warmupTargetLimit = @warmupTargetLimit,
-        warmupReplyRate = @warmupReplyRate
+        warmupReplyRate = @warmupReplyRate,
+        bounceCount = @bounceCount, bounceRate = @bounceRate,
+        quarantineThreshold = @quarantineThreshold, isQuarantined = @isQuarantined,
+        quarantineReason = @quarantineReason
       WHERE id = @id
     `);
 
@@ -417,6 +432,11 @@ class SQLiteStore {
       warmupDailyIncrement: merged.warmupDailyIncrement ?? 3,
       warmupTargetLimit: merged.warmupTargetLimit ?? 45,
       warmupReplyRate: merged.warmupReplyRate ?? 35,
+      bounceCount: merged.bounceCount ?? 0,
+      bounceRate: merged.bounceRate ?? 0.0,
+      quarantineThreshold: merged.quarantineThreshold ?? 3.0,
+      isQuarantined: merged.isQuarantined ? 1 : 0,
+      quarantineReason: merged.quarantineReason || null,
     });
 
     return merged;
