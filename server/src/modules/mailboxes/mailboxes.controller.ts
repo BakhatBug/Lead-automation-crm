@@ -223,4 +223,31 @@ export class MailboxesController {
       res.status(400).json({ success: false, error: err.message });
     }
   }
+
+  // POST /api/mailboxes/:id/bounce
+  static recordBounce(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { bouncedEmail, rfcCode, reason } = req.body;
+      const result = MailboxesService.recordBounce(id as string, {
+        bouncedEmail,
+        rfcCode,
+        reason,
+      });
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(err.message.includes('not found') ? 404 : 400).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/mailboxes/:id/quarantine/reset
+  static resetQuarantine(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const result = MailboxesService.resetQuarantine(id as string);
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(err.message.includes('not found') ? 404 : 400).json({ success: false, error: err.message });
+    }
+  }
 }

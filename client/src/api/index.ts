@@ -240,6 +240,35 @@ export const api = {
     });
   },
 
+  recordMailboxBounce: async (
+    id: string,
+    data: { bouncedEmail?: string; rfcCode?: string; reason?: string }
+  ) => {
+    return fetchJSON<{
+      success: boolean;
+      mailbox: Mailbox;
+      isQuarantined: boolean;
+      bounceRate: number;
+      quarantineTriggered: boolean;
+      suppressionAdded: boolean;
+      leadUpdated: boolean;
+      message: string;
+    }>(`/mailboxes/${id}/bounce`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  resetMailboxQuarantine: async (id: string) => {
+    return fetchJSON<{
+      success: boolean;
+      mailbox: Mailbox;
+      message: string;
+    }>(`/mailboxes/${id}/quarantine/reset`, {
+      method: 'POST',
+    });
+  },
+
   connectMailbox: async (data: {
     provider: string;
     email: string;

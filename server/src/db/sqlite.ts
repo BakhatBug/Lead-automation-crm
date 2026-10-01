@@ -106,7 +106,12 @@ export function initDatabaseSchema() {
       warmupStartingLimit INTEGER DEFAULT 5,
       warmupDailyIncrement INTEGER DEFAULT 3,
       warmupTargetLimit INTEGER DEFAULT 45,
-      warmupReplyRate INTEGER DEFAULT 35
+      warmupReplyRate INTEGER DEFAULT 35,
+      bounceCount INTEGER DEFAULT 0,
+      bounceRate REAL DEFAULT 0.0,
+      quarantineThreshold REAL DEFAULT 3.0,
+      isQuarantined INTEGER DEFAULT 0,
+      quarantineReason TEXT
     );
 
     CREATE TABLE IF NOT EXISTS conversations (
@@ -234,6 +239,11 @@ export function initDatabaseSchema() {
     if (!columns.includes('warmupDailyIncrement')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupDailyIncrement INTEGER DEFAULT 3');
     if (!columns.includes('warmupTargetLimit')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupTargetLimit INTEGER DEFAULT 45');
     if (!columns.includes('warmupReplyRate')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN warmupReplyRate INTEGER DEFAULT 35');
+    if (!columns.includes('bounceCount')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN bounceCount INTEGER DEFAULT 0');
+    if (!columns.includes('bounceRate')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN bounceRate REAL DEFAULT 0.0');
+    if (!columns.includes('quarantineThreshold')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN quarantineThreshold REAL DEFAULT 3.0');
+    if (!columns.includes('isQuarantined')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN isQuarantined INTEGER DEFAULT 0');
+    if (!columns.includes('quarantineReason')) sqliteDb.exec('ALTER TABLE mailboxes ADD COLUMN quarantineReason TEXT');
   } catch (e) {
     console.error('[Database Migration Error]', e);
   }
